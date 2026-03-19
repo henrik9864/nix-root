@@ -10,8 +10,6 @@ let
   bootPadding   = cfg.image.bootPadding;
   rootfsPadding = cfg.image.rootfsPadding;
 
-  toSectors = mib: mib * 2048;
-
   consoleArgs =
     "console=${cfg.serial.console} console=tty1"
     + (if cfg.serial.extraArgs != "" then " ${cfg.serial.extraArgs}" else "");

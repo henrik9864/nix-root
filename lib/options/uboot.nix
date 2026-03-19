@@ -5,11 +5,8 @@ let
 in {
   options.uboot = {
     package = mkOption {
-      type = types.str;
-      description = ''
-        Attribute name of the U-Boot package in nixpkgs
-        (e.g. "ubootOrangePi5").
-      '';
+      type = types.package;
+      description = "U-Boot package (e.g. pkgs.ubootOrangePi5).";
     };
 
     idbloaderOffset = mkOption {

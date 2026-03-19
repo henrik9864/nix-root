@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 
 let
   inherit (lib.kernel) yes;
@@ -8,7 +8,7 @@ in {
   board.dtb  = "rk3588s-radxa-cm5-io.dtb";
 
   # UBoot
-  uboot.package = "ubootOrangePi5";
+  uboot.package = pkgs.ubootOrangePi5;
 
   # Linux kernel
   kernel.version       = "7.0-rc4";
@@ -39,6 +39,10 @@ in {
   serial.console = "ttyS2,1500000";
 
   # Rootfs
+  rootfs.extraPackages = [
+    pkgs.curl
+  ];
+
   rootfs.files = {
     "/etc/hostname" = { text = "radxa-cm5"; };
   };

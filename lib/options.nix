@@ -19,11 +19,6 @@ let
         type = types.attrs;
         internal = true;
       };
-
-      _uboot = mkOption {
-        type = types.package;
-        internal = true;
-      };
     };
 
     config = {
@@ -36,7 +31,7 @@ let
         system = cfg.board.buildSystem;
       };
 
-      _uboot = cfg._pkgs.${cfg.uboot.package};
+      _module.args.pkgs = cfg._pkgs;
     };
   };
 

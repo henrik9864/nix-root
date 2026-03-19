@@ -1,8 +1,10 @@
 { pkgs, cfg, uboot, kernel, initrd, rootfs }:
 
 let
-  dtbName   = cfg.board.dtb;
-  imageName = "${cfg.board.name}.img";
+  dtbName     = cfg.board.dtb;
+  rootDevice  = cfg.output.rootDevice;
+  imageSuffix = cfg.output.imageSuffix;
+  imageName   = "${cfg.board.name}${imageSuffix}.img";
 
   ubootReserved = cfg.image.ubootReserved;
   bootSizeMin   = cfg.image.bootSizeMin;
@@ -16,7 +18,7 @@ let
 in
 
 pkgs.stdenv.mkDerivation {
-  name = "${cfg.board.name}-sd-image";
+  name = "${cfg.board.name}${imageSuffix}-image";
 
   nativeBuildInputs = with pkgs; [
     dosfstools
@@ -59,7 +61,9 @@ pkgs.stdenv.mkDerivation {
     ROOTFS_START=$((BOOT_START + BOOT_SIZE))
     TOTAL_SIZE=$((ROOTFS_START + ROOTFS_SIZE))
 
-    echo ":: Image layout ::"
+    echo ":: Image layout (${cfg.output.target}) ::"
+    echo "  Target: ${cfg.output.target}"
+    echo "  Root device: ${rootDevice}"
     echo "  Boot content:  ''${BOOT_CONTENT_SIZE} MiB"
     echo "  Boot partition: ''${BOOT_SIZE} MiB (min ${toString bootSizeMin}, padding ${toString bootPadding})"
     echo "  Rootfs content: ''${ROOTFS_CONTENT_SIZE} MiB"
@@ -103,7 +107,7 @@ LABEL ${cfg.board.name}
   KERNEL  /Image
   INITRD  /initrd
   FDT     /${dtbName}
-  APPEND  ${consoleArgs} root=/dev/mmcblk1p2 rootfstype=ext4 rootwait rw init=/init
+  APPEND  ${consoleArgs} root=${rootDevice} rootfstype=ext4 rootwait rw init=/init
 CONF
 
     mmd   -i boot.fat ::/extlinux

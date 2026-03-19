@@ -43,6 +43,7 @@ let
       ./options/rootfs.nix
       ./options/image.nix
       ./options/serial.nix
+      ./options/output.nix
       internalModule
     ] ++ modules;
   };

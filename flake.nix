@@ -7,11 +7,14 @@
 
   outputs = { self, nixpkgs }:
   let
-    mkBoard = boardModule:
+    mkBoard = { boardModule, outputTarget }:
     let
       eval = import ./lib/options.nix {
         inherit nixpkgs;
-        modules = [ boardModule ];
+        modules = [
+          boardModule
+          { output.target = outputTarget; }
+        ];
       };
 
       cfg = eval.config;
@@ -25,12 +28,14 @@
       inherit kernel rootfs initrd image;
     };
 
-    radxaCm5 = mkBoard ./boards/radxa-cm5.nix;
+    radxaCm5Sd   = mkBoard { boardModule = ./boards/radxa-cm5.nix; outputTarget = "sd"; };
+    radxaCm5Emmc = mkBoard { boardModule = ./boards/radxa-cm5.nix; outputTarget = "emmc"; };
   in {
     packages.x86_64-linux = {
-      radxaCm5       = radxaCm5.image;
-      radxaCm5Kernel = radxaCm5.kernel;
-      radxaCm5Rootfs = radxaCm5.rootfs;
+      radxaCm5 = {
+        sd   = radxaCm5Sd.image;
+        emmc = radxaCm5Emmc.image;
+      };
     };
   };
 }

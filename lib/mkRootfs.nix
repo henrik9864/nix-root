@@ -15,6 +15,35 @@ let
       done
     '') cfg.rootfs.extraPackages
   );
+
+  # Generate shell commands for rootfs.overlay
+  overlayCommands = if cfg.rootfs.overlay != null then ''
+    echo ":: Applying rootfs overlay ::"
+    cp -a ${cfg.rootfs.overlay}/. $out/
+  '' else "";
+
+  # Generate shell commands for rootfs.files
+  fileCommands = builtins.concatStringsSep "\n" (
+    pkgs.lib.mapAttrsToList (path: opts:
+      let
+        dir = builtins.dirOf path;
+        writeContent =
+          if opts.text != null then
+            ''cat > $out${path} << 'NIXFILEEOF'
+${opts.text}
+NIXFILEEOF''
+          else if opts.source != null then
+            "cp ${opts.source} $out${path}"
+          else
+            builtins.throw "rootfs.files.\"${path}\": must set either 'text' or 'source'";
+      in ''
+        mkdir -p $out${dir}
+        ${writeContent}
+        chmod ${opts.mode} $out${path}
+      ''
+    ) cfg.rootfs.files
+  );
+
 in
 
 pkgs.stdenv.mkDerivation {
@@ -45,6 +74,12 @@ pkgs.stdenv.mkDerivation {
 ${cfg.rootfs.initScript}
 NIXEOF
     chmod +x $out/init
+
+    # ── Overlay (applied first) ────────────────────────
+    ${overlayCommands}
+
+    # ── Declarative files (applied last, highest priority) ──
+    ${fileCommands}
 
     # ── Extra commands ─────────────────────────────────
     ${cfg.rootfs.extraCommands}

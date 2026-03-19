@@ -2,6 +2,29 @@
 
 let
   inherit (lib) mkOption types;
+
+  fileOpts = types.submodule {
+    options = {
+      text = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Text content of the file. Mutually exclusive with 'source'.";
+      };
+
+      source = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = "Path to a source file. Mutually exclusive with 'text'.";
+      };
+
+      mode = mkOption {
+        type = types.str;
+        default = "0644";
+        description = "File permissions (octal string).";
+      };
+    };
+  };
+
 in {
   options.rootfs = {
     extraPackages = mkOption {
@@ -46,6 +69,29 @@ in {
       type = types.str;
       default = "nameserver 1.1.1.1";
       description = "Contents of /etc/resolv.conf.";
+    };
+
+    overlay = mkOption {
+      type = types.nullOr types.path;
+      default = null;
+      description = ''
+        Path to a directory whose contents are copied on top of the rootfs.
+        Mirrors the rootfs layout (e.g. overlay/etc/hostname → /etc/hostname).
+      '';
+    };
+
+    files = mkOption {
+      type = types.attrsOf fileOpts;
+      default = {};
+      description = ''
+        Declarative file definitions. Keys are absolute paths in the rootfs.
+        Each value has 'text' or 'source', and an optional 'mode'.
+        These are applied after the overlay, so they take priority.
+      '';
+      example = {
+        "/etc/hostname" = { text = "my-board"; };
+        "/etc/myapp.conf" = { source = ./files/myapp.conf; mode = "0600"; };
+      };
     };
   };
 }

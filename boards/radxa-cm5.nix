@@ -37,4 +37,9 @@ in {
 
   # Serial console
   serial.console = "ttyS2,1500000";
+
+  # Rootfs
+  rootfs.files = {
+    "/etc/hostname" = { text = "radxa-cm5"; };
+  };
 }

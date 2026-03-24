@@ -15,6 +15,12 @@ let
   consoleArgs =
     "console=${cfg.serial.console} console=tty1"
     + (if cfg.serial.extraArgs != "" then " ${cfg.serial.extraArgs}" else "");
+
+  ubootFlashCmds = builtins.concatStringsSep "\n" (
+    map (f: ''
+      dd if=${uboot}/${f.file} of=$IMG bs=512 seek=${toString f.offset} conv=notrunc
+    '') cfg.uboot.files
+  );
 in
 
 pkgs.stdenv.mkDerivation {
@@ -29,24 +35,20 @@ pkgs.stdenv.mkDerivation {
   ];
 
   buildCommand = ''
-    # ── Calculate sizes ────────────────────────────────
-    # Helper: size of a path in MiB, rounded up
+    # ── Calculate sizes ────────────────────────���───────
     size_mib() {
       local bytes
       bytes=$(du -sb "$1" | cut -f1)
       echo $(( (bytes + 1048575) / 1048576 ))
     }
 
-    # Boot contents: kernel Image + DTB + initrd
     BOOT_CONTENT_SIZE=0
     BOOT_CONTENT_SIZE=$((BOOT_CONTENT_SIZE + $(size_mib ${kernel}/Image)))
     BOOT_CONTENT_SIZE=$((BOOT_CONTENT_SIZE + $(size_mib ${kernel}/dtbs/rockchip/${dtbName})))
     BOOT_CONTENT_SIZE=$((BOOT_CONTENT_SIZE + $(size_mib ${initrd}/initrd)))
 
-    # Rootfs contents
     ROOTFS_CONTENT_SIZE=$(size_mib ${rootfs})
 
-    # Apply minimums and padding
     BOOT_SIZE=$((BOOT_CONTENT_SIZE + ${toString bootPadding}))
     if [ "$BOOT_SIZE" -lt "${toString bootSizeMin}" ]; then
       BOOT_SIZE=${toString bootSizeMin}
@@ -77,10 +79,9 @@ pkgs.stdenv.mkDerivation {
     dd if=/dev/zero of=$IMG bs=1M count=$TOTAL_SIZE
 
     # U-Boot
-    dd if=${uboot}/idbloader.img of=$IMG bs=512 seek=${toString cfg.uboot.idbloaderOffset} conv=notrunc
-    dd if=${uboot}/u-boot.itb    of=$IMG bs=512 seek=${toString cfg.uboot.itbOffset}       conv=notrunc
+    ${ubootFlashCmds}
 
-    # Partition table (sector math)
+    # Partition table
     BOOT_START_S=$((BOOT_START * 2048))
     BOOT_SIZE_S=$((BOOT_SIZE * 2048))
     ROOTFS_START_S=$((ROOTFS_START * 2048))

@@ -1,4 +1,4 @@
-{ pkgs, cfg }:
+{ pkgs, nativePkgs, cfg }:
 
 let
   busybox = pkgs.busybox.override {
@@ -46,8 +46,8 @@ NIXFILEEOF''
 
 in
 
-pkgs.stdenv.mkDerivation {
-  name = "${cfg.board.name}-rootfs";
+nativePkgs.stdenv.mkDerivation {
+  name = "${cfg.board.name}-rootfs-${pkgs.stdenv.hostPlatform.config}";
 
   buildCommand = ''
     # ── Directory layout ───────────────────────────────
@@ -57,8 +57,8 @@ pkgs.stdenv.mkDerivation {
     cp ${busybox}/bin/busybox $out/bin/busybox
     chmod +x $out/bin/busybox
 
-    ${busybox}/bin/busybox --list | while read applet; do
-      ln -sf /bin/busybox $out/bin/$applet
+    for applet in ${nativePkgs.busybox}/bin/*; do
+      ln -sf /bin/busybox $out/bin/$(basename "$applet")
     done
 
     # ── Extra packages ─────────────────────────────────

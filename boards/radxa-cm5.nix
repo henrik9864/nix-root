@@ -8,6 +8,10 @@ in {
   board.crossSystem = "aarch64-unknown-linux-gnu";
 
   uboot.package = pkgs.ubootOrangePi5;
+  uboot.files   = [
+    { file = "idbloader.img"; offset = 64;    }
+    { file = "u-boot.itb";   offset = 16384; }
+  ];
 
   kernel.version       = "7.0-rc4";
   kernel.modDirVersion = "7.0.0-rc4";

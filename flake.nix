@@ -29,9 +29,9 @@
       cfg = eval.config;
 
       uboot  = cfg.uboot.package;
-      kernel = import ./lib/mkKernel.nix  { pkgs = cfg._pkgs; inherit cfg; };
-      rootfs = import ./lib/mkRootfs.nix  { pkgs = cfg._pkgs; inherit cfg; };
-      initrd = import ./lib/mkInitrd.nix  { pkgs = cfg._nativePkgs; inherit rootfs; };
+      kernel = import ./lib/mkKernel.nix  { pkgs = cfg._pkgs;                                    inherit cfg; };
+      rootfs = import ./lib/mkRootfs.nix  { pkgs = cfg._pkgs; nativePkgs = cfg._nativePkgs;      inherit cfg; };
+      initrd = import ./lib/mkInitrd.nix  { pkgs = cfg._nativePkgs;                              inherit rootfs; };
       image  = import ./lib/mkImage.nix   { pkgs = cfg._nativePkgs; inherit cfg uboot kernel initrd rootfs; };
     in {
       inherit kernel rootfs initrd image;

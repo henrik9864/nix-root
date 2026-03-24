@@ -7,7 +7,10 @@ in {
   board.dtb         = "rv1103g-luckfox-pico-plus.dtb";
   board.crossSystem = "armv7l-unknown-linux-gnueabihf";
 
-  uboot.package = pkgs.ubootBananaPi;
+  uboot.package = pkgs.ubootLuckfoxPicoPlus;
+  uboot.files   = [
+    { file = "u-boot.bin"; offset = 64; }
+  ];
 
   kernel.version       = "7.0-rc4";
   kernel.modDirVersion = "7.0.0-rc4";

@@ -27,6 +27,6 @@ pkgs.buildLinux {
 
   extraMeta = {
     description = "Linux kernel for ${cfg.board.name}";
-    platforms   = [ "aarch64-linux" ];
+    platforms   = [ pkgs.stdenv.hostPlatform.system ];
   };
 }

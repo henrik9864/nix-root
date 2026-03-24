@@ -3,11 +3,11 @@
 let
   inherit (lib.kernel) yes;
 in {
-  board.name        = "radxa-cm5";
-  board.dtb         = "rk3588s-radxa-cm5-io.dtb";
-  board.crossSystem = "aarch64-unknown-linux-gnu";
+  board.name        = "luckfox-pico-plus";
+  board.dtb         = "rv1103g-luckfox-pico-plus.dtb";
+  board.crossSystem = "armv7l-unknown-linux-gnueabihf";
 
-  uboot.package = pkgs.ubootOrangePi5;
+  uboot.package = pkgs.ubootBananaPi;
 
   kernel.version       = "7.0-rc4";
   kernel.modDirVersion = "7.0.0-rc4";
@@ -20,12 +20,12 @@ in {
   };
 
   kernel.structuredConfig = {
-    ARCH_ROCKCHIP         = yes;
-    ROCKCHIP_PM_DOMAINS   = yes;
-    MMC                   = yes;
-    MMC_SDHCI             = yes;
-    MMC_SDHCI_PLTFM       = yes;
-    MMC_SDHCI_OF_DWCMSHC  = yes;
+    ARCH_ROCKCHIP        = yes;
+    ROCKCHIP_PM_DOMAINS  = yes;
+    MMC                  = yes;
+    MMC_SDHCI            = yes;
+    MMC_SDHCI_PLTFM      = yes;
+    MMC_SDHCI_OF_DWCMSHC = yes;
   };
 
   image.bootPadding   = 8;
@@ -36,6 +36,6 @@ in {
   rootfs.extraPackages = [ pkgs.curl ];
 
   rootfs.files = {
-    "/etc/hostname" = { text = "radxa-cm5"; };
+    "/etc/hostname" = { text = "luckfox-pico-plus"; };
   };
 }

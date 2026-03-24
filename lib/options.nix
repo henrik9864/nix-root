@@ -1,4 +1,4 @@
-{ nixpkgs, modules }:
+{ nixpkgs, modules, overlays ? [] }:
 
 let
   lib = (import nixpkgs { system = "x86_64-linux"; }).lib;
@@ -25,13 +25,16 @@ let
       _pkgs = import nixpkgs {
         localSystem = cfg.board.buildSystem;
         crossSystem = { config = cfg.board.crossSystem; };
+        inherit overlays;
       };
 
       _nativePkgs = import nixpkgs {
         system = cfg.board.buildSystem;
+        inherit overlays;
       };
 
-      _module.args.pkgs = cfg._pkgs;
+      _module.args.pkgs       = cfg._pkgs;
+      _module.args.nativePkgs = cfg._nativePkgs;
     };
   };
 

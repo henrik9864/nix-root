@@ -7,10 +7,19 @@
 
   outputs = { self, nixpkgs }:
   let
+    overlays = [
+      (final: prev: import ./pkgs/default.nix { callPackage = final.callPackage; })
+    ];
+
+    pkgs = import nixpkgs {
+      system = "x86_64-linux";
+      inherit overlays;
+    };
+
     mkBoard = { boardModule, outputTarget }:
     let
       eval = import ./lib/options.nix {
-        inherit nixpkgs;
+        inherit nixpkgs overlays;
         modules = [
           boardModule
           { output.target = outputTarget; }
@@ -28,13 +37,20 @@
       inherit kernel rootfs initrd image;
     };
 
-    radxaCm5Sd   = mkBoard { boardModule = ./boards/radxa-cm5.nix; outputTarget = "sd"; };
-    radxaCm5Emmc = mkBoard { boardModule = ./boards/radxa-cm5.nix; outputTarget = "emmc"; };
+    radxaCm5Sd      = mkBoard { boardModule = ./boards/radxa-cm5.nix;         outputTarget = "sd"; };
+    radxaCm5Emmc    = mkBoard { boardModule = ./boards/radxa-cm5.nix;         outputTarget = "emmc"; };
+    luckfoxPicoPlus = mkBoard { boardModule = ./boards/luckfox-pico-plus.nix; outputTarget = "sd"; };
   in {
     packages.x86_64-linux = {
+      inherit (pkgs) ubootLuckfoxPicoPlus;
+
       radxaCm5 = {
         sd   = radxaCm5Sd.image;
         emmc = radxaCm5Emmc.image;
+      };
+
+      luckfoxPicoPlus = {
+        sd = luckfoxPicoPlus.image;
       };
     };
   };

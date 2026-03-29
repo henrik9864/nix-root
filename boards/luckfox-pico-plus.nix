@@ -7,7 +7,7 @@ in {
   board.dtb         = "rv1103g-luckfox-pico-plus.dtb";
   board.crossSystem = "armv7l-unknown-linux-gnueabihf";
 
-  uboot.package = pkgs.ubootLuckfoxPicoPlus;
+  # uboot.package = TODO: Add barebox
   uboot.files   = [
     { file = "u-boot.bin"; offset = 64; }
   ];

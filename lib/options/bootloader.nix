@@ -3,10 +3,10 @@
 let
   inherit (lib) mkOption types;
 in {
-  options.uboot = {
+  options.bootloader = {
     package = mkOption {
       type = types.package;
-      description = "U-Boot package (e.g. pkgs.ubootOrangePi5).";
+      description = "Bootloader package (e.g. pkgs.barebox or pkgs.ubootOrangePi5).";
     };
 
     files = mkOption {
@@ -14,7 +14,7 @@ in {
         options = {
           file = mkOption {
             type = types.str;
-            description = "Filename inside the U-Boot package to flash.";
+            description = "Filename inside the bootloader package to flash.";
           };
           offset = mkOption {
             type = types.int;
@@ -22,7 +22,7 @@ in {
           };
         };
       });
-      description = "List of U-Boot files to flash and their sector offsets.";
+      description = "List of bootloader files to flash and their sector offsets.";
     };
   };
 }

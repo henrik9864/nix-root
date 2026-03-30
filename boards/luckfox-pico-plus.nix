@@ -7,9 +7,11 @@ in {
   board.dtb         = "rv1103g-luckfox-pico-plus.dtb";
   board.crossSystem = "armv7l-unknown-linux-gnueabihf";
 
-  # uboot.package = TODO: Add barebox
-  uboot.files   = [
-    { file = "u-boot.bin"; offset = 64; }
+  bootloader.package = pkgs.barebox.override {
+    defconfig = "rockchip_v7a_defconfig";
+  };
+  bootloader.files = [
+    { file = "barebox.bin"; offset = 64; }
   ];
 
   kernel.version       = "7.0-rc4";

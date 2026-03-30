@@ -41,7 +41,7 @@ let
   evaluated = lib.evalModules {
     modules = [
       ./options/board.nix
-      ./options/uboot.nix
+      ./options/bootloader.nix
       ./options/kernel.nix
       ./options/rootfs.nix
       ./options/image.nix

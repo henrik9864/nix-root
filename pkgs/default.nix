@@ -1,5 +1,5 @@
 { callPackage }:
 
 {
-  
+  barebox = callPackage ./barebox { };
 }

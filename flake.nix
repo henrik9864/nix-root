@@ -28,11 +28,11 @@
 
       cfg = eval.config;
 
-      uboot  = cfg.uboot.package;
-      kernel = import ./lib/mkKernel.nix  { pkgs = cfg._pkgs;                                    inherit cfg; };
-      rootfs = import ./lib/mkRootfs.nix  { pkgs = cfg._pkgs; nativePkgs = cfg._nativePkgs;      inherit cfg; };
-      initrd = import ./lib/mkInitrd.nix  { pkgs = cfg._nativePkgs;                              inherit rootfs; };
-      image  = import ./lib/mkImage.nix   { pkgs = cfg._nativePkgs; inherit cfg uboot kernel initrd rootfs; };
+      bootloader = cfg.bootloader.package;
+      kernel     = import ./lib/mkKernel.nix  { pkgs = cfg._pkgs;                               inherit cfg; };
+      rootfs     = import ./lib/mkRootfs.nix  { pkgs = cfg._pkgs; nativePkgs = cfg._nativePkgs; inherit cfg; };
+      initrd     = import ./lib/mkInitrd.nix  { pkgs = cfg._nativePkgs;                         inherit rootfs; };
+      image      = import ./lib/mkImage.nix   { pkgs = cfg._nativePkgs; inherit cfg bootloader kernel initrd rootfs; };
     in {
       inherit kernel rootfs initrd image;
     };
@@ -42,8 +42,6 @@
     luckfoxPicoPlus = mkBoard { boardModule = ./boards/luckfox-pico-plus.nix; outputTarget = "sd"; };
   in {
     packages.x86_64-linux = {
-      inherit (pkgs) ubootLuckfoxPicoPlus;
-
       radxaCm5 = {
         sd   = radxaCm5Sd.image;
         emmc = radxaCm5Emmc.image;

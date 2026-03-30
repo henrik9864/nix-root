@@ -28,10 +28,10 @@ in {
       description = "Extra padding added to the root partition in MiB.";
     };
 
-    ubootReserved = mkOption {
+    bootloaderReserved = mkOption {
       type = types.int;
       default = 32;
-      description = "Space reserved for U-Boot at the start of the image (MiB).";
+      description = "Space reserved for the bootloader at the start of the image (MiB).";
     };
   };
 }

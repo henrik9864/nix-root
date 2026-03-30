@@ -1,4 +1,4 @@
-{ pkgs, cfg, uboot, kernel, initrd, rootfs }:
+{ pkgs, cfg, bootloader, kernel, initrd, rootfs }:
 
 let
   dtbName     = cfg.board.dtb;
@@ -6,20 +6,20 @@ let
   imageSuffix = cfg.output.imageSuffix;
   imageName   = "${cfg.board.name}${imageSuffix}.img";
 
-  ubootReserved = cfg.image.ubootReserved;
-  bootSizeMin   = cfg.image.bootSizeMin;
-  rootfsSizeMin = cfg.image.rootfsSizeMin;
-  bootPadding   = cfg.image.bootPadding;
-  rootfsPadding = cfg.image.rootfsPadding;
+  bootloaderReserved = cfg.image.bootloaderReserved;
+  bootSizeMin        = cfg.image.bootSizeMin;
+  rootfsSizeMin      = cfg.image.rootfsSizeMin;
+  bootPadding        = cfg.image.bootPadding;
+  rootfsPadding      = cfg.image.rootfsPadding;
 
   consoleArgs =
     "console=${cfg.serial.console} console=tty1"
     + (if cfg.serial.extraArgs != "" then " ${cfg.serial.extraArgs}" else "");
 
-  ubootFlashCmds = builtins.concatStringsSep "\n" (
+  bootloaderFlashCmds = builtins.concatStringsSep "\n" (
     map (f: ''
-      dd if=${uboot}/${f.file} of=$IMG bs=512 seek=${toString f.offset} conv=notrunc
-    '') cfg.uboot.files
+      dd if=${bootloader}/${f.file} of=$IMG bs=512 seek=${toString f.offset} conv=notrunc
+    '') cfg.bootloader.files
   );
 in
 
@@ -35,7 +35,7 @@ pkgs.stdenv.mkDerivation {
   ];
 
   buildCommand = ''
-    # ── Calculate sizes ────────────────────────���───────
+    # ── Calculate sizes ────────────────────────────────
     size_mib() {
       local bytes
       bytes=$(du -sb "$1" | cut -f1)
@@ -59,7 +59,7 @@ pkgs.stdenv.mkDerivation {
       ROOTFS_SIZE=${toString rootfsSizeMin}
     fi
 
-    BOOT_START=${toString ubootReserved}
+    BOOT_START=${toString bootloaderReserved}
     ROOTFS_START=$((BOOT_START + BOOT_SIZE))
     TOTAL_SIZE=$((ROOTFS_START + ROOTFS_SIZE))
 
@@ -78,8 +78,8 @@ pkgs.stdenv.mkDerivation {
 
     dd if=/dev/zero of=$IMG bs=1M count=$TOTAL_SIZE
 
-    # U-Boot
-    ${ubootFlashCmds}
+    # Bootloader
+    ${bootloaderFlashCmds}
 
     # Partition table
     BOOT_START_S=$((BOOT_START * 2048))

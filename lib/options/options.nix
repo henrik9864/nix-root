@@ -40,13 +40,13 @@ let
 
   evaluated = lib.evalModules {
     modules = [
-      ./options/board.nix
-      ./options/bootloader.nix
-      ./options/kernel.nix
-      ./options/rootfs.nix
-      ./options/image.nix
-      ./options/serial.nix
-      ./options/output.nix
+      ./board.nix
+      ./bootloader.nix
+      ./kernel.nix
+      ./rootfs.nix
+      ./image.nix
+      ./serial.nix
+      ./output.nix
       internalModule
     ] ++ modules;
   };

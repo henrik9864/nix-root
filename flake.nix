@@ -19,7 +19,7 @@
 
     mkBoard = { boardModule, outputTarget }:
     let
-      eval = import ./lib/options.nix {
+      eval = import ./lib/options/options.nix {
         inherit nixpkgs overlays;
         modules = [
           boardModule
@@ -30,10 +30,10 @@
       cfg = eval.config;
 
       bootloader = cfg.bootloader.package;
-      kernel     = import ./lib/mkKernel.nix  { pkgs = cfg._pkgs;                               inherit cfg; };
-      rootfs     = import ./lib/mkRootfs.nix  { pkgs = cfg._pkgs; nativePkgs = cfg._nativePkgs; inherit cfg; };
-      initrd     = import ./lib/mkInitrd.nix  { pkgs = cfg._nativePkgs;                         inherit rootfs; };
-      image      = import ./lib/mkImage.nix   { pkgs = cfg._nativePkgs; inherit cfg bootloader kernel initrd rootfs; };
+      kernel     = import ./lib/kernel/mkKernel.nix  { pkgs = cfg._pkgs;                               inherit cfg; };
+      rootfs     = import ./lib/rootfs/mkRootfs.nix  { pkgs = cfg._pkgs; nativePkgs = cfg._nativePkgs; inherit cfg; };
+      initrd     = import ./lib/initrd/mkInitrd.nix  { pkgs = cfg._nativePkgs;                         inherit rootfs; };
+      image      = import ./lib/image/mkImage.nix   { pkgs = cfg._nativePkgs; inherit cfg bootloader kernel initrd rootfs; };
     in {
       inherit kernel rootfs initrd image;
     };

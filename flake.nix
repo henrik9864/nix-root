@@ -3,9 +3,10 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    pkgs-custom.url = "path:./pkgs";
   };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, pkgs-custom }:
   let
     overlays = [
       (final: prev: import ./pkgs/default.nix { callPackage = final.callPackage; })

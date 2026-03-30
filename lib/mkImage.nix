@@ -1,10 +1,10 @@
 { pkgs, cfg, bootloader, kernel, initrd, rootfs }:
 
 let
-  dtbName     = cfg.board.dtb;
-  rootDevice  = cfg.output.rootDevice;
-  imageSuffix = cfg.output.imageSuffix;
-  imageName   = "${cfg.board.name}${imageSuffix}.img";
+  kernelImageFile = cfg.kernel.imageFile;
+  rootDevice      = cfg.output.rootDevice;
+  imageSuffix     = cfg.output.imageSuffix;
+  imageName       = "${cfg.board.name}${imageSuffix}.img";
 
   bootloaderReserved = cfg.image.bootloaderReserved;
   bootSizeMin        = cfg.image.bootSizeMin;
@@ -21,6 +21,63 @@ let
       dd if=${bootloader}/${f.file} of=$IMG bs=512 seek=${toString f.offset} conv=notrunc
     '') cfg.bootloader.files
   );
+
+  # ── Resolve DTB name and file ─────────────────────────
+  dtbName =
+    if cfg.board.dts != "" then
+      builtins.replaceStrings [".dts"] [".dtb"] (baseNameOf cfg.board.dts)
+    else
+      cfg.board.dtb;
+
+  dtbFile =
+    let src = cfg.board.dtbSource;
+    in if cfg.board.dts != "" then
+      let
+        dtsDir =
+          if src.type == "kernel" then
+            "${kernel}/dtbs/rockchip/${cfg.board.dts}"
+          else if src.type == "git" then
+            let fetched = pkgs.fetchFromGitHub ({
+              inherit (src.git) owner repo rev hash;
+            } // (if src.git.sparseCheckout != [] then {
+              sparseCheckout = src.git.sparseCheckout;
+            } else {}));
+            in "${fetched}"
+          else
+            src.localPath;
+        includeDir = "${dtsDir}/${src.git.path}/include";
+        dtsPath = "${dtsDir}/${cfg.board.dts}";
+        dtsFileDir = builtins.dirOf dtsPath;
+      in "${pkgs.stdenv.mkDerivation {
+        name = "dtb-${dtbName}";
+        nativeBuildInputs = [ pkgs.dtc pkgs.gcc ];
+        buildCommand = ''
+          cpp -nostdinc \
+              -I ${includeDir} \
+              -I ${dtsFileDir} \
+              -undef -x assembler-with-cpp \
+              ${dtsPath} \
+              -o preprocessed.dts
+
+          dtc -I dts -O dtb \
+              -i ${includeDir} \
+              -i ${dtsFileDir} \
+              -o $out \
+              preprocessed.dts
+        '';
+      }}"
+    else if src.type == "kernel" then
+      "${kernel}/dtbs/rockchip/${dtbName}"
+    else if src.type == "git" then
+      let fetched = pkgs.fetchFromGitHub ({
+        inherit (src.git) owner repo rev hash;
+      } // (if src.git.sparseCheckout != [] then {
+        sparseCheckout = src.git.sparseCheckout;
+      } else {}));
+      in "${fetched}/${src.git.path}"
+    else
+      src.localPath;
+
 in
 
 pkgs.stdenv.mkDerivation {
@@ -43,8 +100,8 @@ pkgs.stdenv.mkDerivation {
     }
 
     BOOT_CONTENT_SIZE=0
-    BOOT_CONTENT_SIZE=$((BOOT_CONTENT_SIZE + $(size_mib ${kernel}/Image)))
-    BOOT_CONTENT_SIZE=$((BOOT_CONTENT_SIZE + $(size_mib ${kernel}/dtbs/rockchip/${dtbName})))
+    BOOT_CONTENT_SIZE=$((BOOT_CONTENT_SIZE + $(size_mib ${kernel}/${kernelImageFile})))
+    BOOT_CONTENT_SIZE=$((BOOT_CONTENT_SIZE + $(size_mib ${dtbFile})))
     BOOT_CONTENT_SIZE=$((BOOT_CONTENT_SIZE + $(size_mib ${initrd}/initrd)))
 
     ROOTFS_CONTENT_SIZE=$(size_mib ${rootfs})
@@ -96,16 +153,16 @@ EOF
     dd if=/dev/zero of=boot.fat bs=1M count=$BOOT_SIZE
     mkfs.fat -F 32 -n BOOT boot.fat
 
-    mcopy -i boot.fat ${kernel}/Image                    ::Image
-    mcopy -i boot.fat ${kernel}/dtbs/rockchip/${dtbName} ::${dtbName}
-    mcopy -i boot.fat ${initrd}/initrd                   ::initrd
+    mcopy -i boot.fat ${kernel}/${kernelImageFile} ::${kernelImageFile}
+    mcopy -i boot.fat ${dtbFile}                   ::${dtbName}
+    mcopy -i boot.fat ${initrd}/initrd             ::initrd
 
     cat > extlinux.conf << CONF
 TIMEOUT 10
 DEFAULT ${cfg.board.name}
 
 LABEL ${cfg.board.name}
-  KERNEL  /Image
+  KERNEL  /${kernelImageFile}
   INITRD  /initrd
   FDT     /${dtbName}
   APPEND  ${consoleArgs} root=${rootDevice} rootfstype=ext4 rootwait rw init=/init

@@ -113,5 +113,11 @@ in {
       default = true;
       description = "Prefer building options as built-in rather than modules.";
     };
+
+    imageFile = mkOption {
+      type = types.enum [ "Image" "zImage" ];
+      default = "Image";
+      description = "Kernel image filename to copy into the boot partition. Use 'zImage' for compressed ARM kernels.";
+    };
   };
 }

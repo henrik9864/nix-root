@@ -7,15 +7,29 @@
 
   outputs = { self, nixpkgs }:
   let
-    pkgs = import nixpkgs {
-      system = "x86_64-linux";
-      overlays = [
-        (final: prev: import ./default.nix { callPackage = final.callPackage; })
-      ];
-    };
+    pkgs = nixpkgs.legacyPackages.x86_64-linux;
+    customPkgs = pkgs.callPackage ./default.nix { };
   in {
-    packages.x86_64-linux = {
-      inherit (pkgs) barebox uboot-luckfox-pico;
-    };
+    packages.x86_64-linux = customPkgs;
+
+    devShells.x86_64-linux =
+      let
+        mkDevShell = pkg: pkg.overrideAttrs (_: {
+          shellHook = ''
+            echo ""
+            echo "Build steps:"
+            echo "  cd \$(mktemp -d)"
+            echo "  unpackPhase"
+            echo "  cd \$sourceRoot"
+            echo "  patchPhase"
+            echo "  configurePhase"
+            echo "  buildPhase"
+            echo ""
+          '';
+        });
+      in {
+        uboot-luckfox-pico = mkDevShell customPkgs.uboot-luckfox-pico;
+        barebox             = mkDevShell customPkgs.barebox;
+      };
   };
 }

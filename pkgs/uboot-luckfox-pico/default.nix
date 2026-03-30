@@ -15,6 +15,10 @@
 , defconfig ? "luckfox_rv1106_uboot_defconfig"
 }:
 
+let
+  kcflags = "-Wno-error=enum-int-mismatch -Wno-error=address -Wno-error=maybe-uninitialized";
+  hostcc  = lib.getExe buildPackages.stdenv.cc;
+in
 stdenv.mkDerivation (finalAttrs: {
   pname = "uboot-luckfox-pico";
   version = "latest-luckfox";
@@ -27,7 +31,7 @@ stdenv.mkDerivation (finalAttrs: {
     sparseCheckout = [ "sysdrv/source/uboot" ];
   };
 
-  sourceRoot = "${finalAttrs.src.name}/sysdrv/source/uboot";
+  sourceRoot = "${finalAttrs.src.name}/sysdrv/source/uboot/u-boot";
 
   depsBuildBuild = [
     buildPackages.stdenv.cc
@@ -56,19 +60,21 @@ stdenv.mkDerivation (finalAttrs: {
 
   configurePhase = ''
     runHook preConfigure
-    make HOSTCC=${lib.getExe buildPackages.stdenv.cc} \
-         ARCH=arm \
-         CROSS_COMPILE=arm-none-eabi- \
-         ${defconfig}
+    make HOSTCC=${hostcc} \
+        ARCH=arm \
+        CROSS_COMPILE=arm-none-eabi- \
+        KCFLAGS="${kcflags}" \
+        ${defconfig}
     runHook postConfigure
   '';
 
   buildPhase = ''
     runHook preBuild
-    make HOSTCC=${lib.getExe buildPackages.stdenv.cc} \
-         ARCH=arm \
-         CROSS_COMPILE=arm-none-eabi- \
-         all
+    make HOSTCC=${hostcc} \
+        ARCH=arm \
+        CROSS_COMPILE=arm-none-eabi- \
+        KCFLAGS="${kcflags}" \
+        all
     runHook postBuild
   '';
 

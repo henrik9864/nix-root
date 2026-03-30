@@ -26,7 +26,6 @@ in {
       description = "Device-tree source filename (e.g. rv1103g-luckfox-pico-plus.dts). If set, compiled to a .dtb at build time.";
     };
 
-    # ── DTB source ───────────────────────────────────────
     dtbSource = {
       type = mkOption {
         type = types.enum [ "kernel" "git" "path" ];

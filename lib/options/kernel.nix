@@ -6,7 +6,6 @@ let
 
   cfg = config.kernel;
 
-  # Auto-detect: if git.rev is set, use git; otherwise tarball
   detectedSrcType = if cfg.git.rev != "" then "git" else "tarball";
 in {
   options.kernel = {
@@ -20,7 +19,6 @@ in {
       description = "Module directory version (e.g. 7.0.0-rc4).";
     };
 
-    # ── Source selection ─────────────────────────────────
     srcType = mkOption {
       type = types.enum [ "git" "tarball" ];
       default = detectedSrcType;
@@ -70,7 +68,6 @@ in {
       };
     };
 
-    # ── Config ───────────────────────────────────────────
     structuredConfig = mkOption {
       type = types.attrs;
       default = {};
@@ -95,7 +92,6 @@ in {
       description = "Base kernel config. Board config is merged on top.";
     };
 
-    # ── Build options ────────────────────────────────────
     enableCommonConfig = mkOption {
       type = types.bool;
       default = false;

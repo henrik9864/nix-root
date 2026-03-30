@@ -22,61 +22,62 @@ let
     '') cfg.bootloader.files
   );
 
-  # ── Resolve DTB name and file ─────────────────────────
   dtbName =
     if cfg.board.dts != "" then
       builtins.replaceStrings [".dts"] [".dtb"] (baseNameOf cfg.board.dts)
     else
       cfg.board.dtb;
 
-  dtbFile =
-    let src = cfg.board.dtbSource;
-    in if cfg.board.dts != "" then
-      let
-        dtsDir =
-          if src.type == "kernel" then
-            "${kernel}/dtbs/rockchip/${cfg.board.dts}"
-          else if src.type == "git" then
-            let fetched = pkgs.fetchFromGitHub ({
-              inherit (src.git) owner repo rev hash;
-            } // (if src.git.sparseCheckout != [] then {
-              sparseCheckout = src.git.sparseCheckout;
-            } else {}));
-            in "${fetched}"
-          else
-            src.localPath;
-        includeDir = "${dtsDir}/${src.git.path}/include";
-        dtsPath = "${dtsDir}/${cfg.board.dts}";
-        dtsFileDir = builtins.dirOf dtsPath;
-      in "${pkgs.stdenv.mkDerivation {
-        name = "dtb-${dtbName}";
-        nativeBuildInputs = [ pkgs.dtc pkgs.gcc ];
-        buildCommand = ''
-          cpp -nostdinc \
-              -I ${includeDir} \
-              -I ${dtsFileDir} \
-              -undef -x assembler-with-cpp \
-              ${dtsPath} \
-              -o preprocessed.dts
+  dtbSource = cfg.board.dtbSource;
 
-          dtc -I dts -O dtb \
-              -i ${includeDir} \
-              -i ${dtsFileDir} \
-              -o $out \
-              preprocessed.dts
-        '';
-      }}"
-    else if src.type == "kernel" then
-      "${kernel}/dtbs/rockchip/${dtbName}"
-    else if src.type == "git" then
-      let fetched = pkgs.fetchFromGitHub ({
-        inherit (src.git) owner repo rev hash;
-      } // (if src.git.sparseCheckout != [] then {
-        sparseCheckout = src.git.sparseCheckout;
-      } else {}));
-      in "${fetched}/${src.git.path}"
+  fetchedGitSource =
+    if dtbSource.type == "git" then
+      pkgs.fetchFromGitHub ({
+        inherit (dtbSource.git) owner repo rev hash;
+      } // (if dtbSource.git.sparseCheckout != [] then {
+        sparseCheckout = dtbSource.git.sparseCheckout;
+      } else {}))
     else
-      src.localPath;
+      null;
+
+  sourceDir =
+    if dtbSource.type == "kernel" then kernel
+    else if dtbSource.type == "git" then fetchedGitSource
+    else dtbSource.localPath;
+
+  # Compile a .dts to .dtb
+  compileDtb = let
+    dtsPath    = "${sourceDir}/${cfg.board.dts}";
+    dtsFileDir = builtins.dirOf dtsPath;
+    includeDir = "${sourceDir}/${dtbSource.git.path}/include";
+  in pkgs.stdenv.mkDerivation {
+    name = "dtb-${dtbName}";
+    nativeBuildInputs = [ pkgs.dtc pkgs.gcc ];
+    buildCommand = ''
+      cpp -nostdinc \
+          -I ${includeDir} \
+          -I ${dtsFileDir} \
+          -undef -x assembler-with-cpp \
+          ${dtsPath} \
+          -o preprocessed.dts
+
+      dtc -I dts -O dtb \
+          -i ${includeDir} \
+          -i ${dtsFileDir} \
+          -o $out \
+          preprocessed.dts
+    '';
+  };
+
+  dtbFile =
+    if cfg.board.dts != "" then
+      "${compileDtb}"
+    else if dtbSource.type == "kernel" then
+      "${kernel}/dtbs/rockchip/${dtbName}"
+    else if dtbSource.type == "git" then
+      "${fetchedGitSource}/${dtbSource.git.path}"
+    else
+      dtbSource.localPath;
 
 in
 

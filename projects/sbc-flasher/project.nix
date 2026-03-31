@@ -1,7 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, boards, ... }:
 
 {
-  imports = [ ../../boards/luckfox-pico-plus/board.nix ];
+  imports = [ boards.luckfox-pico-plus ];
 
   rootfs.extraPackages = [ pkgs.curl ];
 

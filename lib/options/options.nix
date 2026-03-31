@@ -1,4 +1,4 @@
-{ nixpkgs, modules, overlays ? [] }:
+{ nixpkgs, modules, overlays ? [], extraArgs ? {} }:
 
 let
   lib = (import nixpkgs { system = "x86_64-linux"; }).lib;
@@ -50,6 +50,8 @@ let
       ./devshell.nix
       internalModule
     ] ++ modules;
+
+    specialArgs = extraArgs;
   };
 
 in {

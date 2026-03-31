@@ -12,9 +12,17 @@
       (final: prev: import ./pkgs/default.nix { callPackage = final.callPackage; })
     ];
 
+    nativePkgs = import nixpkgs {
+      system = "x86_64-linux";
+      inherit overlays;
+    };
+
+    boards = import ./boards;
+
     evalProject = { projectModule, outputTarget ? "sd" }:
       import ./lib/options/options.nix {
         inherit nixpkgs overlays;
+        extraArgs = { inherit boards; };
         modules = [
           projectModule
           { output.target = outputTarget; }
@@ -23,8 +31,7 @@
 
     mkProject = { projectModule, outputTarget }:
     let
-      eval = evalProject { inherit projectModule outputTarget; };
-      cfg  = eval.config;
+      cfg = (evalProject { inherit projectModule outputTarget; }).config;
 
       bootloader = cfg.bootloader.package;
       kernel     = import ./lib/kernel/mkKernel.nix  { pkgs = cfg._pkgs;                               inherit cfg; };
@@ -35,17 +42,11 @@
       inherit kernel rootfs initrd image cfg;
     };
 
-    mkDevShell = { board }:
-      import ./lib/devshell/mkDevShell.nix { inherit board; };
-
-    targetsFor = projectModule:
-      (evalProject { inherit projectModule; }).config.output.targets;
-
     projectRegistry = import ./projects/projects.nix;
 
     projects = builtins.mapAttrs (_: projectModule:
       let
-        targets = targetsFor projectModule;
+        targets = (evalProject { inherit projectModule; }).config.output.targets;
       in builtins.listToAttrs (map (target: {
         name  = target;
         value = mkProject {
@@ -55,17 +56,31 @@
       }) targets)
     ) projectRegistry;
 
+    mkAllImages = name: targets:
+      let
+        images = builtins.mapAttrs (_: project: project.image) targets;
+        copyCommands = builtins.concatStringsSep "\n"
+          (nativePkgs.lib.mapAttrsToList
+            (target: image: "cp -r ${image}/* $out/")
+            images);
+      in nativePkgs.runCommand "${name}-all" {} ''
+        mkdir -p $out
+        ${copyCommands}
+      '';
+
   in {
     packages.x86_64-linux =
-      builtins.mapAttrs (_: targets:
-        builtins.mapAttrs (_: project: project.image) targets
-      ) projects;
+      builtins.mapAttrs mkAllImages projects;
+
+    images = builtins.mapAttrs (_: targets:
+      builtins.mapAttrs (_: project: project.image) targets
+    ) projects;
 
     devShells.x86_64-linux =
       builtins.mapAttrs (_: targets:
         let
-          firstTarget = builtins.head (builtins.attrValues targets);
-        in mkDevShell { board = firstTarget; }
+          board = builtins.head (builtins.attrValues targets);
+        in import ./lib/devshell/mkDevShell.nix { inherit board; }
       ) projects;
   };
 }

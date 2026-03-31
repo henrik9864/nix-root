@@ -1,7 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, boards, ... }:
 
 {
-  imports = [ ../../boards/radxa-cm5/board.nix ];
+  imports = [ boards.radxa-cm5 ];
 
   rootfs.extraPackages = [ pkgs.curl ];
 

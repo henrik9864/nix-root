@@ -8,7 +8,7 @@ let
     builtins.concatStringsSep "\n" (nativePkgs.lib.mapAttrsToList f attrs);
 
   shellCfg    = import ./shell.nix    { inherit nativePkgs cfg; };
-  networkCmds = joinCmds (import ./network.nix { inherit nativePkgs; }) cfg.devShell.networkInterfaces;
+  networkCmds = joinCmds (import ./network.nix { inherit nativePkgs; }) cfg.networking.interfaces;
   serialCmds  = joinCmds (import ./serial.nix  { inherit nativePkgs cfg; }) cfg.devShell.serialDevices;
   usbCmds     = joinCmds (import ./usb.nix     { inherit nativePkgs cfg; }) cfg.devShell.usbDevices;
 
@@ -40,7 +40,7 @@ let
 in nativePkgs.mkShell {
   name = "${cfg.board.name}-rootfs-devshell";
 
-  packages = cfg.rootfs.extraPackages ++ (with nativePkgs; [
+  packages = cfg.environment.systemPackages ++ (with nativePkgs; [
     busybox
     iproute2
     util-linux

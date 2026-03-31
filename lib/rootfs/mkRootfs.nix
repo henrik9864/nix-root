@@ -1,10 +1,13 @@
 { pkgs, nativePkgs, cfg }:
 
 let
+  lib = nativePkgs.lib;
+
   busybox = pkgs.busybox.override {
     enableStatic = true;
   };
 
+  # ── Packages ──────────────────────────────────────
   extraPkgCommands = builtins.concatStringsSep "\n" (
     map (pkg: ''
       for bin in ${pkg}/bin/*; do
@@ -13,36 +16,83 @@ let
       for sbin in ${pkg}/sbin/*; do
         [ -f "$sbin" ] && cp "$sbin" $out/sbin/ && chmod +x $out/sbin/$(basename "$sbin")
       done
-    '') cfg.rootfs.extraPackages
+    '') cfg.environment.systemPackages
   );
 
-  # Generate shell commands for rootfs.overlay
-  overlayCommands = if cfg.rootfs.overlay != null then ''
-    echo ":: Applying rootfs overlay ::"
-    cp -a ${cfg.rootfs.overlay}/. $out/
-  '' else "";
+  # ── Users & groups ────────────────────────────────
+  passwdFile = builtins.concatStringsSep "\n" (
+    lib.mapAttrsToList (name: u:
+      "${name}:x:${toString u.uid}:${toString (cfg.users.groups.${u.group}.gid or 0)}:${u.description}:${u.home}:${u.shell}"
+    ) cfg.users.users
+  );
 
-  # Generate shell commands for rootfs.files
-  fileCommands = builtins.concatStringsSep "\n" (
-    pkgs.lib.mapAttrsToList (path: opts:
+  groupFile = builtins.concatStringsSep "\n" (
+    lib.mapAttrsToList (name: g:
+      "${name}:x:${toString g.gid}:"
+    ) cfg.users.groups
+  );
+
+  # ── Networking ────────────────────────────────────
+  resolvConf = builtins.concatStringsSep "\n" (
+    map (ns: "nameserver ${ns}") cfg.networking.nameservers
+  );
+
+  networkScript = builtins.concatStringsSep "\n" (
+    lib.mapAttrsToList (iface: opts:
+      if opts.useDHCP then
+        "udhcpc -i ${iface} -b -q &"
+      else if opts.address != null then
+        ''
+          ip addr add ${opts.address} dev ${iface}
+          ip link set ${iface} up
+        '' + lib.optionalString (opts.gateway != null)
+          "ip route add default via ${opts.gateway} dev ${iface}\n"
+      else ""
+    ) cfg.networking.interfaces
+  );
+
+  # ── environment.etc ───────────────────────────────
+  etcCommands = builtins.concatStringsSep "\n" (
+    lib.mapAttrsToList (path: opts:
       let
-        dir = builtins.dirOf path;
+        fullPath = "/etc/${path}";
+        dir = builtins.dirOf fullPath;
         writeContent =
           if opts.text != null then
-            ''cat > $out${path} << 'NIXFILEEOF'
+            ''cat > $out${fullPath} << 'NIXFILEEOF'
 ${opts.text}
 NIXFILEEOF''
           else if opts.source != null then
-            "cp ${opts.source} $out${path}"
+            "cp ${opts.source} $out${fullPath}"
           else
-            builtins.throw "rootfs.files.\"${path}\": must set either 'text' or 'source'";
+            builtins.throw "environment.etc.\"${path}\": must set either 'text' or 'source'";
       in ''
         mkdir -p $out${dir}
         ${writeContent}
-        chmod ${opts.mode} $out${path}
+        chmod ${opts.mode} $out${fullPath}
       ''
-    ) cfg.rootfs.files
+    ) cfg.environment.etc
   );
+
+  # ── Overlay ───────────────────────────────────────
+  overlayCommands = lib.optionalString (cfg.rootfs.overlay != null) ''
+    echo ":: Applying rootfs overlay ::"
+    cp -a ${cfg.rootfs.overlay}/. $out/
+  '';
+
+  # ── Init script with networking ───────────────────
+  initScript = ''
+    #!/bin/sh
+    mount -t proc  none /proc
+    mount -t sysfs none /sys
+    mount -t devtmpfs none /dev 2>/dev/null || mdev -s
+
+    hostname ${cfg.networking.hostName}
+    ${networkScript}
+
+    echo ":: Boot OK ::"
+    exec /bin/sh
+  '';
 
 in
 
@@ -64,22 +114,23 @@ nativePkgs.stdenv.mkDerivation {
     # ── Extra packages ─────────────────────────────────
     ${extraPkgCommands}
 
-    # ── Minimal /etc ───────────────────────────────────
-    echo "${cfg.rootfs.passwd}"  > $out/etc/passwd
-    echo "${cfg.rootfs.group}"   > $out/etc/group
-    echo "${cfg.rootfs.resolv}"  > $out/etc/resolv.conf
+    # ── /etc files ─────────────────────────────────────
+    echo "${passwdFile}"  > $out/etc/passwd
+    echo "${groupFile}"   > $out/etc/group
+    echo "${resolvConf}"  > $out/etc/resolv.conf
+    echo "${cfg.networking.hostName}" > $out/etc/hostname
 
     # ── Init script ────────────────────────────────────
     cat > $out/init << 'NIXEOF'
-${cfg.rootfs.initScript}
+${initScript}
 NIXEOF
     chmod +x $out/init
 
-    # ── Overlay (applied first) ────────────────────────
+    # ── Overlay ────────────────────────────────────────
     ${overlayCommands}
 
-    # ── Declarative files (applied last, highest priority) ──
-    ${fileCommands}
+    # ── environment.etc (highest priority) ─────────────
+    ${etcCommands}
 
     # ── Extra commands ─────────────────────────────────
     ${cfg.rootfs.extraCommands}

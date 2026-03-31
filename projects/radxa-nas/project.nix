@@ -3,9 +3,11 @@
 {
   imports = [ boards.radxa-cm5 ];
 
-  rootfs.extraPackages = [ pkgs.curl ];
+  networking.hostName = "radxa-nas";
 
-  rootfs.files = {
-    "/etc/hostname" = { text = "radxa-nas"; };
+  networking.interfaces.eth0 = {
+    useDHCP = true;
   };
+
+  environment.systemPackages = [ pkgs.curl ];
 }

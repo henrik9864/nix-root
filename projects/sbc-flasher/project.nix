@@ -3,18 +3,15 @@
 {
   imports = [ boards.luckfox-pico-plus ];
 
-  rootfs.extraPackages = [ pkgs.curl ];
+  networking.hostName = "sbc-flasher";
+  networking.nameservers = [ "1.1.1.1" "8.8.8.8" ];
 
-  rootfs.files = {
-    "/etc/hostname" = { text = "sbc-flasher"; };
+  networking.interfaces.eth0 = {
+    address = "192.168.1.100/24";
+    gateway = "192.168.1.1";
   };
 
-  devShell.networkInterfaces = {
-    "eth1" = {
-      address = "192.168.1.100/24";
-      gateway = "192.168.1.1";
-    };
-  };
+  environment.systemPackages = [ pkgs.curl ];
 
   devShell.serialDevices = {
     "debug-uart" = {

@@ -12,22 +12,19 @@
       (final: prev: import ./pkgs/default.nix { callPackage = final.callPackage; })
     ];
 
-    pkgs = import nixpkgs {
-      system = "x86_64-linux";
-      inherit overlays;
-    };
-
-    mkBoard = { boardModule, outputTarget }:
-    let
-      eval = import ./lib/options/options.nix {
+    evalProject = { projectModule, outputTarget ? "sd" }:
+      import ./lib/options/options.nix {
         inherit nixpkgs overlays;
         modules = [
-          boardModule
+          projectModule
           { output.target = outputTarget; }
         ];
       };
 
-      cfg = eval.config;
+    mkProject = { projectModule, outputTarget }:
+    let
+      eval = evalProject { inherit projectModule outputTarget; };
+      cfg  = eval.config;
 
       bootloader = cfg.bootloader.package;
       kernel     = import ./lib/kernel/mkKernel.nix  { pkgs = cfg._pkgs;                               inherit cfg; };
@@ -41,23 +38,34 @@
     mkDevShell = { board }:
       import ./lib/devshell/mkDevShell.nix { inherit board; };
 
-    boardRegistry = import ./boards/boards.nix;
+    targetsFor = projectModule:
+      (evalProject { inherit projectModule; }).config.output.targets;
 
-    boards = builtins.mapAttrs (_: targets:
-      builtins.mapAttrs (_: args: mkBoard args) targets
-    ) boardRegistry;
+    projectRegistry = import ./projects/projects.nix;
+
+    projects = builtins.mapAttrs (_: projectModule:
+      let
+        targets = targetsFor projectModule;
+      in builtins.listToAttrs (map (target: {
+        name  = target;
+        value = mkProject {
+          inherit projectModule;
+          outputTarget = target;
+        };
+      }) targets)
+    ) projectRegistry;
 
   in {
     packages.x86_64-linux =
       builtins.mapAttrs (_: targets:
-        builtins.mapAttrs (_: board: board.image) targets
-      ) boards;
+        builtins.mapAttrs (_: project: project.image) targets
+      ) projects;
 
     devShells.x86_64-linux =
       builtins.mapAttrs (_: targets:
         let
-          firstBoard = builtins.head (builtins.attrValues targets);
-        in mkDevShell { board = firstBoard; }
-      ) boards;
+          firstTarget = builtins.head (builtins.attrValues targets);
+        in mkDevShell { board = firstTarget; }
+      ) projects;
   };
 }

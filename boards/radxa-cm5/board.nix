@@ -37,9 +37,5 @@ in {
 
   serial.console = "ttyS2,1500000";
 
-  rootfs.extraPackages = [ pkgs.curl ];
-
-  rootfs.files = {
-    "/etc/hostname" = { text = "radxa-cm5"; };
-  };
+  output.targets = [ "sd" "emmc" ];
 }

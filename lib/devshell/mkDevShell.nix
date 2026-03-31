@@ -25,10 +25,16 @@ let
     ${serialCmds}
     ${usbCmds}
 
-    trap 'kill $MOCK_PIDS 2>/dev/null; rm -rf "$DEVSHELL_TMPDIR"' EXIT
+    cleanup() {
+      kill $MOCK_PIDS 2>/dev/null
+      rm -rf "$DEVSHELL_TMPDIR"
+    }
+    trap cleanup EXIT
 
     export INPUTRC=${shellCfg.inputrc}
-    exec ${nativePkgs.bashInteractive}/bin/bash --rcfile ${shellCfg.bashrc} -i
+    ${nativePkgs.bashInteractive}/bin/bash --rcfile ${shellCfg.bashrc} -i
+
+    exit $?
   '';
 
 in nativePkgs.mkShell {
@@ -49,7 +55,11 @@ in nativePkgs.mkShell {
     ${nativePkgs.coreutils}/bin/chmod -R u+w "$_rootfs_workdir"
     export ROOTFS="$_rootfs_workdir"
 
-    trap 'rm -rf "$_rootfs_workdir"; echo "Cleaned up rootfs workdir: $_rootfs_workdir"' EXIT
+    cleanup() {
+      rm -rf "$_rootfs_workdir"
+      echo "Cleaned up rootfs workdir: $_rootfs_workdir"
+    }
+    trap cleanup EXIT
 
     echo ""
     echo "══════════════════════════════════════════════════════"
@@ -60,6 +70,8 @@ in nativePkgs.mkShell {
     echo ""
 
     cd "$ROOTFS"
-    exec unshare --user --map-root-user --net -- ${netnsWrapper}
+    unshare --user --map-root-user --net -- ${netnsWrapper}
+
+    exit $?
   '';
 }

@@ -21,15 +21,15 @@ in {
     { file = "u-boot.bin"; offset = 64; }
   ];
 
-  kernel.version       = "7.0-rc4";
-  kernel.modDirVersion = "7.0.0-rc4";
+  kernel.version       = "7.0-rc6";
+  kernel.modDirVersion = "7.0.0-rc6";
   kernel.imageFile = "zImage";
 
   kernel.git = {
     owner = "torvalds";
     repo  = "linux";
-    rev   = "v7.0-rc4";
-    hash  = "sha256-/57xoWrZy6GdhP7U9pvMJUrNWd3PJIVmxXjsT3OQpKQ=";
+    rev   = "v7.0-rc6";
+    hash  = "sha256-hfBIYnBMpVVRo6hhcvHF2ZbjhSRDmaprJmarVQ1gqyA=";
   };
 
   kernel.structuredConfig = {

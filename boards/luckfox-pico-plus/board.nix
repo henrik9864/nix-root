@@ -51,4 +51,11 @@ in {
   rootfs.files = {
     "/etc/hostname" = { text = "luckfox-pico-plus"; };
   };
+
+  devShell.networkInterfaces = {
+    "eth1" = {
+      address = "192.168.1.100/24";
+      gateway = "192.168.1.1";
+    };
+  };
 }

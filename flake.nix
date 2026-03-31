@@ -43,11 +43,46 @@
       cfg = board.cfg;
       nativePkgs = cfg._nativePkgs;
 
+      interfaces = cfg.devShell.networkInterfaces;
+
+      ifUpCommands = builtins.concatStringsSep "\n" (
+        nativePkgs.lib.mapAttrsToList (name: opts:
+          let
+            macCmd = if opts.mac != null
+              then "ip link set dev ${name} address ${opts.mac}"
+              else "";
+            gwCmd = if opts.gateway != null
+              then "ip route add default via ${opts.gateway} dev ${name} 2>/dev/null || true"
+              else "";
+          in ''
+            ip link add ${name} type dummy
+            ${macCmd}
+            ip addr add ${opts.address} dev ${name}
+            ip link set dev ${name} up
+            ${gwCmd}
+          ''
+        ) interfaces
+      );
+
+      netnsWrapper = nativePkgs.writeShellScript "${cfg.board.name}-netns-wrapper" ''
+        export PATH="${nativePkgs.iproute2}/bin:$PATH"
+
+        ip link set lo up
+
+        ${ifUpCommands}
+
+        export PS1=$'\001\033[1;32m\002\\u@\\h\001\033[0m\002 \001\033[1;34m\002\\w\001\033[0m\002\$ '
+        export HISTFILE="$ROOTFS/.bash_history"
+        exec bash --norc --noprofile -i
+      '';
+
     in nativePkgs.mkShell {
       name = "${cfg.board.name}-rootfs-devshell";
 
       packages = cfg.rootfs.extraPackages ++ [
         nativePkgs.busybox
+        nativePkgs.iproute2
+        nativePkgs.util-linux
       ];
 
       shellHook = ''
@@ -64,8 +99,6 @@
         }
         trap _cleanup_rootfs EXIT
 
-        export PS1="(${cfg.board.name}-rootfs) \[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ "
-
         echo ""
         echo "══════════════════════════════════════════════════════"
         echo "  Board rootfs devshell: ${cfg.board.name}"
@@ -77,6 +110,8 @@
         echo ""
 
         cd "$ROOTFS"
+
+        exec unshare --user --map-root-user --net -- ${netnsWrapper}
       '';
     };
 

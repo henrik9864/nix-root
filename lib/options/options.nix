@@ -47,6 +47,7 @@ let
       ./image.nix
       ./serial.nix
       ./output.nix
+      ./devshell.nix
       internalModule
     ] ++ modules;
   };

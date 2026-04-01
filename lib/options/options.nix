@@ -8,6 +8,12 @@ let
   internalModule = { config, ... }:
   let
     cfg = config;
+
+    crossPkgs = import nixpkgs {
+      localSystem = cfg.board.buildSystem;
+      crossSystem = { config = cfg.board.crossSystem; };
+      inherit overlays;
+    };
   in {
     options = {
       _pkgs = mkOption {
@@ -22,11 +28,13 @@ let
     };
 
     config = {
-      _pkgs = import nixpkgs {
-        localSystem = cfg.board.buildSystem;
-        crossSystem = { config = cfg.board.crossSystem; };
-        inherit overlays;
-      };
+      # Pure cross-compilation: buildPlatform != hostPlatform, no emulation.
+      # Packages use the cross toolchain; target binaries are never executed
+      # during the build.
+      _pkgs = assert crossPkgs.stdenv.buildPlatform.system
+           != crossPkgs.stdenv.hostPlatform.system
+           || cfg.board.buildSystem == cfg.board.crossSystem;
+        crossPkgs;
 
       _nativePkgs = import nixpkgs {
         system = cfg.board.buildSystem;
@@ -48,6 +56,7 @@ let
       ./serial.nix
       ./output.nix
       ./devshell.nix
+      ./flash.nix
       internalModule
     ] ++ modules;
 

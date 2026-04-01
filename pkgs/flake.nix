@@ -30,6 +30,7 @@
       in {
         uboot-luckfox-pico = mkDevShell customPkgs.uboot-luckfox-pico;
         barebox             = mkDevShell customPkgs.barebox;
+        rkbin-miniloader    = mkDevShell customPkgs.rkbin-miniloader;
       };
   };
 }

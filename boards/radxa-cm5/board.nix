@@ -13,6 +13,9 @@ in {
     { file = "u-boot.itb";   offset = 16384; }
   ];
 
+  # Add after the existing bootloader/kernel/image config:
+  flash.method = "dd";
+
   kernel.version       = "7.0-rc4";
   kernel.modDirVersion = "7.0.0-rc4";
 

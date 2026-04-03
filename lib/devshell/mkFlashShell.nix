@@ -9,26 +9,48 @@ let
   method     = cfg.flash.method;
   miniloader = cfg.flash.miniloader;
 
-  # Copy bootloader files
+  # ── Copy commands ────────────────────────────────────────────────
+
   copyBootloaderCmds = builtins.concatStringsSep "\n" (
     map (f: ''
       cp ${bootloader}/${f.file} "$FLASH_DIR/${f.file}"
     '') cfg.bootloader.files
   );
 
-  # Copy miniloader if present
-    copyMiniloaderCmd = lib.optionalString (miniloader != null) ''
-    cp ${miniloader}/miniloader.bin "$FLASH_DIR/miniloader.bin"
+  copyMiniloaderCmd = lib.optionalString (miniloader != null) ''
+    cp ${miniloader}/*.bin "$FLASH_DIR/"
   '';
+
+  copyUpgradeToolCmd = lib.optionalString (method == "upgrade_tool") ''
+    cat > "$FLASH_DIR/config.ini" << 'EOF'
+[System]
+EOF
+  '';
+
+  # ── Per-method instructions ──────────────────────────────────────
+
+  miniloaderBin = if miniloader != null
+    then builtins.head (builtins.attrNames (builtins.readDir "${miniloader}"))
+    else "miniloader.bin";
 
   rkdeveloptoolSteps = ''
     echo "Steps:"
     echo "  1. Hold BOOT button and plug in USB"
     echo "  2. sudo rkdeveloptool ld"
-    echo "  3. sudo rkdeveloptool db miniloader.bin"
+    echo "  3. sudo rkdeveloptool db ${miniloaderBin}"
     echo "  4. sudo rkdeveloptool ef                              # erase flash"
     echo "  5. sudo rkdeveloptool wl 0x0 image.img                # write full image"
     echo "  6. sudo rkdeveloptool rd"
+  '';
+
+  upgradeToolSteps = ''
+    echo "Steps:"
+    echo "  1. Hold BOOT button and plug in USB"
+    echo "  2. sudo upgrade_tool ld"
+    echo "  3. sudo upgrade_tool db ${miniloaderBin}"
+    echo "  4. sudo upgrade_tool ef                               # erase flash"
+    echo "  5. sudo upgrade_tool wl 0x0 image.img                 # write full image"
+    echo "  6. sudo upgrade_tool rd"
   '';
 
   ddSteps = ''
@@ -43,8 +65,17 @@ let
     echo "  4. sync"
   '';
 
+  stepsForMethod = {
+    rkdeveloptool = rkdeveloptoolSteps;
+    upgrade_tool  = upgradeToolSteps;
+    dd            = ddSteps;
+  };
+
+  # ── Per-method packages ──────────────────────────────────────────
+
   methodPackages = {
     rkdeveloptool = [ nativePkgs.rkdeveloptool ];
+    upgrade_tool  = [ nativePkgs.upgrade-tool ];
     dd            = [];
   };
 
@@ -59,6 +90,7 @@ in nativePkgs.mkShell {
 
     ${copyBootloaderCmds}
     ${copyMiniloaderCmd}
+    ${copyUpgradeToolCmd}
 
     cleanup() {
       rm -rf "$FLASH_DIR"
@@ -74,7 +106,7 @@ in nativePkgs.mkShell {
     echo "Flash dir: $FLASH_DIR"
     ls -la "$FLASH_DIR"
     echo ""
-    ${if method == "rkdeveloptool" then rkdeveloptoolSteps else ddSteps}
+    ${stepsForMethod.${method}}
     echo ""
 
     cd "$FLASH_DIR"

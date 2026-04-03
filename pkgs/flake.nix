@@ -14,17 +14,39 @@
 
     devShells.x86_64-linux =
       let
-        mkDevShell = pkg: pkg.overrideAttrs (_: {
+        mkDevShell = pkg: pkg.overrideAttrs (old: {
           shellHook = ''
+            BUILD_DIR=$(mktemp -d "/tmp/${pkg.pname}-XXXXXX")
+            export BUILD_DIR
+
+            cleanup() {
+              rm -rf "$BUILD_DIR"
+              echo "Cleaned up build dir: $BUILD_DIR"
+            }
+            trap cleanup EXIT
+
+            installPhase() {
+              ${old.installPhase or "echo 'No installPhase defined.'"}
+            }
+            export -f installPhase
+
+            echo ""
+            echo "══════════════════════════════════════════════════════"
+            echo "  ${pkg.pname} dev shell"
+            echo "  Build dir: $BUILD_DIR"
+            echo "══════════════════════════════════════════════════════"
             echo ""
             echo "Build steps:"
-            echo "  cd \$(mktemp -d)"
             echo "  unpackPhase"
             echo "  cd \$sourceRoot"
             echo "  patchPhase"
             echo "  configurePhase"
             echo "  buildPhase"
+            echo "  export out=\$BUILD_DIR/out"
+            echo "  installPhase"
             echo ""
+
+            cd "$BUILD_DIR"
           '';
         });
       in {

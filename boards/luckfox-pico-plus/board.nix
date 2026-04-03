@@ -2,7 +2,7 @@
 
 let
   inherit (lib.kernel) yes;
-in {
+in rec {
   board.name        = "luckfox-pico-plus";
   board.crossSystem = "armv7l-unknown-linux-gnueabihf";
   board.dts         = "sysdrv/source/kernel/arch/arm/boot/dts/rv1103g-luckfox-pico-plus.dts";
@@ -21,9 +21,8 @@ in {
     { file = "u-boot.bin"; offset = 64; }
   ];
 
-  # Add after the existing bootloader/kernel/image config:
-  flash.method = "rkdeveloptool";
-  flash.miniloader = pkgs.rkbin-miniloader;
+  flash.method = "upgrade_tool";
+  flash.miniloader = pkgs.rkbin-miniloader.override { iniFile = "RV1106MINIALL"; };
 
   kernel.version       = "7.0-rc6";
   kernel.modDirVersion = "7.0.0-rc6";

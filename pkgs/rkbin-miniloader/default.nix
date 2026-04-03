@@ -24,13 +24,13 @@ stdenvNoCC.mkDerivation {
   dontConfigure = true;
   dontBuild = true;
 
-    installPhase = ''
+  installPhase = ''
     chmod +x tools/boot_merger
     ./tools/boot_merger "RKBOOT/${iniFile}.ini"
 
     mkdir -p $out
     outFile=$(grep -i '^PATH=' "RKBOOT/${iniFile}.ini" | cut -d= -f2 | tr -d '[:space:]')
-    cp "$outFile" $out/miniloader.bin
+    cp "$outFile" $out/
   '';
 
   meta = with lib; {

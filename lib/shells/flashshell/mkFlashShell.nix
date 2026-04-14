@@ -33,16 +33,6 @@ EOF
     then builtins.head (builtins.attrNames (builtins.readDir "${miniloader}"))
     else "miniloader.bin";
 
-  rkdeveloptoolSteps = ''
-    echo "Steps:"
-    echo "  1. Hold BOOT button and plug in USB"
-    echo "  2. sudo rkdeveloptool ld"
-    echo "  3. sudo rkdeveloptool db ${miniloaderBin}"
-    echo "  4. sudo rkdeveloptool ef                              # erase flash"
-    echo "  5. sudo rkdeveloptool wl 0x0 image.img                # write full image"
-    echo "  6. sudo rkdeveloptool rd"
-  '';
-
   upgradeToolSteps = ''
     echo "Steps:"
     echo "  1. Hold BOOT button and plug in USB"
@@ -66,17 +56,15 @@ EOF
   '';
 
   stepsForMethod = {
-    rkdeveloptool = rkdeveloptoolSteps;
-    upgrade_tool  = upgradeToolSteps;
-    dd            = ddSteps;
+    upgrade_tool = upgradeToolSteps;
+    dd           = ddSteps;
   };
 
   # ── Per-method packages ──────────────────────────────────────────
 
   methodPackages = {
-    rkdeveloptool = [ nativePkgs.rkdeveloptool ];
-    upgrade_tool  = [ nativePkgs.upgrade-tool ];
-    dd            = [];
+    upgrade_tool = [ nativePkgs.upgrade-tool ];
+    dd           = [];
   };
 
 in nativePkgs.mkShell {

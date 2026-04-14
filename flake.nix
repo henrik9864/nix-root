@@ -80,14 +80,14 @@
       builtins.mapAttrs (_: targets:
         let
           board = builtins.head (builtins.attrValues targets);
-        in import ./lib/devshell/mkDevShell.nix { inherit board; }
+        in import ./lib/shells/devshell/mkDevShell.nix { inherit board; }
       ) projects;
 
     flashShells.x86_64-linux =
       builtins.mapAttrs (_: targets:
         let
           board = builtins.head (builtins.attrValues targets);
-        in import ./lib/devshell/mkFlashShell.nix { inherit board; }
+        in import ./lib/shells/flashshell/mkFlashShell.nix { inherit board; }
       ) projects;
   };
 }

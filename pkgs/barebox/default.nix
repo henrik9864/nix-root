@@ -1,22 +1,21 @@
-{ lib
-, stdenv
-, fetchurl
-, bison
-, flex
-, openssl
-, pkg-config
-, perl
-, python3
-, hostname
-, gcc-arm-embedded
-, lz4
-, buildPackages
-
-, defconfig ? "rockchip_v7a_defconfig"
-, extraConfig ? ""
-, version ? "2026.03.1"
+{
+  lib,
+  stdenv,
+  fetchurl,
+  bison,
+  flex,
+  openssl,
+  pkg-config,
+  perl,
+  python3,
+  hostname,
+  gcc-arm-embedded,
+  lz4,
+  buildPackages,
+  defconfig ? "rockchip_v7a_defconfig",
+  extraConfig ? "",
+  version ? "2026.03.1",
 }:
-
 stdenv.mkDerivation (finalAttrs: {
   pname = "barebox";
   inherit version;
@@ -94,7 +93,7 @@ stdenv.mkDerivation (finalAttrs: {
     description = "Barebox bootloader";
     homepage = "https://www.barebox.org";
     license = licenses.gpl2Only;
-    maintainers = [ ];
+    maintainers = [];
     platforms = platforms.linux;
   };
 })

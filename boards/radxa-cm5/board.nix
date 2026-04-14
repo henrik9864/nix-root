@@ -1,44 +1,52 @@
-{ lib, pkgs, ... }:
-
-let
+{
+  lib,
+  pkgs,
+  ...
+}: let
   inherit (lib.kernel) yes;
 in {
-  board.name        = "radxa-cm5";
-  board.dtb         = "rk3588s-radxa-cm5-io.dtb";
+  board.name = "radxa-cm5";
+  board.dtb = "rk3588s-radxa-cm5-io.dtb";
   board.crossSystem = "aarch64-unknown-linux-gnu";
 
   bootloader.package = pkgs.ubootOrangePi5;
-  bootloader.files   = [
-    { file = "idbloader.img"; offset = 64;    }
-    { file = "u-boot.itb";   offset = 16384; }
+  bootloader.files = [
+    {
+      file = "idbloader.img";
+      offset = 64;
+    }
+    {
+      file = "u-boot.itb";
+      offset = 16384;
+    }
   ];
 
   # Add after the existing bootloader/kernel/image config:
   flash.method = "dd";
 
-  kernel.version       = "7.0-rc4";
+  kernel.version = "7.0-rc4";
   kernel.modDirVersion = "7.0.0-rc4";
 
   kernel.git = {
     owner = "torvalds";
-    repo  = "linux";
-    rev   = "v7.0-rc4";
-    hash  = "sha256-/57xoWrZy6GdhP7U9pvMJUrNWd3PJIVmxXjsT3OQpKQ=";
+    repo = "linux";
+    rev = "v7.0-rc4";
+    hash = "sha256-/57xoWrZy6GdhP7U9pvMJUrNWd3PJIVmxXjsT3OQpKQ=";
   };
 
   kernel.structuredConfig = {
-    ARCH_ROCKCHIP         = yes;
-    ROCKCHIP_PM_DOMAINS   = yes;
-    MMC                   = yes;
-    MMC_SDHCI             = yes;
-    MMC_SDHCI_PLTFM       = yes;
-    MMC_SDHCI_OF_DWCMSHC  = yes;
+    ARCH_ROCKCHIP = yes;
+    ROCKCHIP_PM_DOMAINS = yes;
+    MMC = yes;
+    MMC_SDHCI = yes;
+    MMC_SDHCI_PLTFM = yes;
+    MMC_SDHCI_OF_DWCMSHC = yes;
   };
 
-  image.bootPadding   = 8;
+  image.bootPadding = 8;
   image.rootfsPadding = 16;
 
   serial.console = "ttyS2,1500000";
 
-  output.targets = [ "sd" "emmc" ];
+  output.targets = ["sd" "emmc"];
 }

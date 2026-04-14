@@ -1,12 +1,12 @@
-{ lib
-, stdenvNoCC
-, fetchFromGitHub
-, autoPatchelfHook
-, stdenv
-, zlib
-, iniFile ? "RV1106MINIALL"
+{
+  lib,
+  stdenvNoCC,
+  fetchFromGitHub,
+  autoPatchelfHook,
+  stdenv,
+  zlib,
+  iniFile ? "RV1106MINIALL",
 }:
-
 stdenvNoCC.mkDerivation {
   pname = "rkbin-miniloader-${lib.toLower iniFile}";
   version = "unstable-2025-06-13";
@@ -18,8 +18,8 @@ stdenvNoCC.mkDerivation {
     hash = "sha256-gNCZwJd9pjisk6vmvtRNyGSBFfAYOADTa5Nd6Zk+qEk=";
   };
 
-  nativeBuildInputs = [ autoPatchelfHook ];
-  buildInputs = [ zlib stdenv.cc.cc.lib ];
+  nativeBuildInputs = [autoPatchelfHook];
+  buildInputs = [zlib stdenv.cc.cc.lib];
 
   dontConfigure = true;
   dontBuild = true;

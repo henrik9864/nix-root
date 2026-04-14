@@ -1,6 +1,8 @@
-{ pkgs, nativePkgs, cfg }:
-
-let
+{
+  pkgs,
+  nativePkgs,
+  cfg,
+}: let
   lib = nativePkgs.lib;
 
   busybox = pkgs.busybox.override {
@@ -16,20 +18,23 @@ let
       for sbin in ${pkg}/sbin/*; do
         [ -f "$sbin" ] && cp "$sbin" $out/sbin/ && chmod +x $out/sbin/$(basename "$sbin")
       done
-    '') cfg.environment.systemPackages
+    '')
+    cfg.environment.systemPackages
   );
 
   # ── Users & groups ────────────────────────────────
   passwdFile = builtins.concatStringsSep "\n" (
-    lib.mapAttrsToList (name: u:
-      "${name}:x:${toString u.uid}:${toString (cfg.users.groups.${u.group}.gid or 0)}:${u.description}:${u.home}:${u.shell}"
-    ) cfg.users.users
+    lib.mapAttrsToList (
+      name: u: "${name}:x:${toString u.uid}:${toString (cfg.users.groups.${u.group}.gid or 0)}:${u.description}:${u.home}:${u.shell}"
+    )
+    cfg.users.users
   );
 
   groupFile = builtins.concatStringsSep "\n" (
-    lib.mapAttrsToList (name: g:
-      "${name}:x:${toString g.gid}:"
-    ) cfg.users.groups
+    lib.mapAttrsToList (
+      name: g: "${name}:x:${toString g.gid}:"
+    )
+    cfg.users.groups
   );
 
   # ── Networking ────────────────────────────────────
@@ -38,40 +43,44 @@ let
   );
 
   networkScript = builtins.concatStringsSep "\n" (
-    lib.mapAttrsToList (iface: opts:
-      if opts.useDHCP then
-        "udhcpc -i ${iface} -b -q &"
-      else if opts.address != null then
-        ''
-          ip addr add ${opts.address} dev ${iface}
-          ip link set ${iface} up
-        '' + lib.optionalString (opts.gateway != null)
+    lib.mapAttrsToList (
+      iface: opts:
+        if opts.useDHCP
+        then "udhcpc -i ${iface} -b -q &"
+        else if opts.address != null
+        then
+          ''
+            ip addr add ${opts.address} dev ${iface}
+            ip link set ${iface} up
+          ''
+          + lib.optionalString (opts.gateway != null)
           "ip route add default via ${opts.gateway} dev ${iface}\n"
-      else ""
-    ) cfg.networking.interfaces
+        else ""
+    )
+    cfg.networking.interfaces
   );
 
   # ── environment.etc ───────────────────────────────
   etcCommands = builtins.concatStringsSep "\n" (
-    lib.mapAttrsToList (path: opts:
-      let
+    lib.mapAttrsToList (
+      path: opts: let
         fullPath = "/etc/${path}";
         dir = builtins.dirOf fullPath;
         writeContent =
-          if opts.text != null then
-            ''cat > $out${fullPath} << 'NIXFILEEOF'
-${opts.text}
-NIXFILEEOF''
-          else if opts.source != null then
-            "cp ${opts.source} $out${fullPath}"
-          else
-            builtins.throw "environment.etc.\"${path}\": must set either 'text' or 'source'";
+          if opts.text != null
+          then ''            cat > $out${fullPath} << 'NIXFILEEOF'
+            ${opts.text}
+            NIXFILEEOF''
+          else if opts.source != null
+          then "cp ${opts.source} $out${fullPath}"
+          else builtins.throw "environment.etc.\"${path}\": must set either 'text' or 'source'";
       in ''
         mkdir -p $out${dir}
         ${writeContent}
         chmod ${opts.mode} $out${fullPath}
       ''
-    ) cfg.environment.etc
+    )
+    cfg.environment.etc
   );
 
   # ── Overlay ───────────────────────────────────────
@@ -93,46 +102,44 @@ NIXFILEEOF''
     echo ":: Boot OK ::"
     exec /bin/sh
   '';
-
 in
+  nativePkgs.stdenv.mkDerivation {
+    name = "${cfg.board.name}-rootfs-${pkgs.stdenv.hostPlatform.config}";
 
-nativePkgs.stdenv.mkDerivation {
-  name = "${cfg.board.name}-rootfs-${pkgs.stdenv.hostPlatform.config}";
+    buildCommand = ''
+          # ── Directory layout ───────────────────────────────
+          mkdir -p $out/{bin,sbin,etc,proc,sys,dev,tmp,mnt,root}
 
-  buildCommand = ''
-    # ── Directory layout ───────────────────────────────
-    mkdir -p $out/{bin,sbin,etc,proc,sys,dev,tmp,mnt,root}
+          # ── Busybox ────────────────────────────────────────
+          cp ${busybox}/bin/busybox $out/bin/busybox
+          chmod +x $out/bin/busybox
 
-    # ── Busybox ────────────────────────────────────────
-    cp ${busybox}/bin/busybox $out/bin/busybox
-    chmod +x $out/bin/busybox
+          for applet in ${nativePkgs.busybox}/bin/*; do
+            ln -sf /bin/busybox $out/bin/$(basename "$applet")
+          done
 
-    for applet in ${nativePkgs.busybox}/bin/*; do
-      ln -sf /bin/busybox $out/bin/$(basename "$applet")
-    done
+          # ── Extra packages ─────────────────────────────────
+          ${extraPkgCommands}
 
-    # ── Extra packages ─────────────────────────────────
-    ${extraPkgCommands}
+          # ── /etc files ─────────────────────────────────────
+          echo "${passwdFile}"  > $out/etc/passwd
+          echo "${groupFile}"   > $out/etc/group
+          echo "${resolvConf}"  > $out/etc/resolv.conf
+          echo "${cfg.networking.hostName}" > $out/etc/hostname
 
-    # ── /etc files ─────────────────────────────────────
-    echo "${passwdFile}"  > $out/etc/passwd
-    echo "${groupFile}"   > $out/etc/group
-    echo "${resolvConf}"  > $out/etc/resolv.conf
-    echo "${cfg.networking.hostName}" > $out/etc/hostname
+          # ── Init script ────────────────────────────────────
+          cat > $out/init << 'NIXEOF'
+      ${initScript}
+      NIXEOF
+          chmod +x $out/init
 
-    # ── Init script ────────────────────────────────────
-    cat > $out/init << 'NIXEOF'
-${initScript}
-NIXEOF
-    chmod +x $out/init
+          # ── Overlay ────────────────────────────────────────
+          ${overlayCommands}
 
-    # ── Overlay ────────────────────────────────────────
-    ${overlayCommands}
+          # ── environment.etc (highest priority) ─────────────
+          ${etcCommands}
 
-    # ── environment.etc (highest priority) ─────────────
-    ${etcCommands}
-
-    # ── Extra commands ─────────────────────────────────
-    ${cfg.rootfs.extraCommands}
-  '';
-}
+          # ── Extra commands ─────────────────────────────────
+          ${cfg.rootfs.extraCommands}
+    '';
+  }

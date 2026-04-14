@@ -1,6 +1,4 @@
-{ lib, ... }:
-
-let
+{lib, ...}: let
   inherit (lib) mkOption mkEnableOption types;
 
   serialDeviceOpts = types.submodule {
@@ -34,7 +32,7 @@ let
   usbDeviceOpts = types.submodule {
     options = {
       type = mkOption {
-        type = types.enum [ "serial" "storage" "custom" ];
+        type = types.enum ["serial" "storage" "custom"];
         default = "serial";
         description = "Type of USB gadget to emulate.";
       };
@@ -52,7 +50,7 @@ let
       };
 
       storageFs = mkOption {
-        type = types.enum [ "vfat" "ext4" ];
+        type = types.enum ["vfat" "ext4"];
         default = "vfat";
         description = "Filesystem type for the storage image.";
       };
@@ -64,7 +62,6 @@ let
       };
     };
   };
-
 in {
   options.devShell = {
     serialDevices = mkOption {

@@ -1,11 +1,13 @@
-{ lib, config, ... }:
-
-let
+{
+  lib,
+  config,
+  ...
+}: let
   inherit (lib) mkOption types;
 in {
   options.flash = {
     method = mkOption {
-      type = types.enum [ "upgrade_tool" "dd" ];
+      type = types.enum ["upgrade_tool" "dd"];
       default = "dd";
       description = ''
         Flash method for installing firmware onto the board.

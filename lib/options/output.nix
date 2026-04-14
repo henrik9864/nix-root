@@ -1,17 +1,19 @@
-{ lib, config, ... }:
-
-let
+{
+  lib,
+  config,
+  ...
+}: let
   inherit (lib) mkOption types;
 
   cfg = config.output;
 
   targetDefaults = {
     sd = {
-      rootDevice  = "/dev/mmcblk1p2";
+      rootDevice = "/dev/mmcblk1p2";
       imageSuffix = "-sd";
     };
     emmc = {
-      rootDevice  = "/dev/mmcblk0p2";
+      rootDevice = "/dev/mmcblk0p2";
       imageSuffix = "-emmc";
     };
   };
@@ -20,8 +22,8 @@ let
 in {
   options.output = {
     targets = mkOption {
-      type = types.listOf (types.enum [ "sd" "emmc" ]);
-      default = [ "sd" ];
+      type = types.listOf (types.enum ["sd" "emmc"]);
+      default = ["sd"];
       description = ''
         List of output targets this board supports.
         Used by the project registry to generate image variants.
@@ -29,7 +31,7 @@ in {
     };
 
     target = mkOption {
-      type = types.enum [ "sd" "emmc" ];
+      type = types.enum ["sd" "emmc"];
       default = "sd";
       description = ''
         Boot target medium for this specific build.

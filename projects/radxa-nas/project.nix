@@ -1,7 +1,9 @@
-{ pkgs, boards, ... }:
-
 {
-  imports = [ boards.radxa-cm5 ];
+  pkgs,
+  boards,
+  ...
+}: {
+  imports = [boards.radxa-cm5];
 
   networking.hostName = "radxa-nas";
 
@@ -9,5 +11,5 @@
     useDHCP = true;
   };
 
-  environment.systemPackages = [ pkgs.curl ];
+  environment.systemPackages = [pkgs.curl];
 }

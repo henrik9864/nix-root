@@ -5,16 +5,18 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, nixpkgs }:
-  let
+  outputs = {
+    self,
+    nixpkgs,
+  }: let
     pkgs = nixpkgs.legacyPackages.x86_64-linux;
-    customPkgs = pkgs.callPackage ./default.nix { };
+    customPkgs = pkgs.callPackage ./default.nix {};
   in {
     packages.x86_64-linux = customPkgs;
 
-    devShells.x86_64-linux =
-      let
-        mkDevShell = pkg: pkg.overrideAttrs (old: {
+    devShells.x86_64-linux = let
+      mkDevShell = pkg:
+        pkg.overrideAttrs (old: {
           shellHook = ''
             BUILD_DIR=$(mktemp -d "/tmp/${pkg.pname}-XXXXXX")
             export BUILD_DIR
@@ -49,10 +51,10 @@
             cd "$BUILD_DIR"
           '';
         });
-      in {
-        uboot-luckfox-pico = mkDevShell customPkgs.uboot-luckfox-pico;
-        barebox             = mkDevShell customPkgs.barebox;
-        rkbin-miniloader    = mkDevShell customPkgs.rkbin-miniloader;
-      };
+    in {
+      uboot-luckfox-pico = mkDevShell customPkgs.uboot-luckfox-pico;
+      barebox = mkDevShell customPkgs.barebox;
+      rkbin-miniloader = mkDevShell customPkgs.rkbin-miniloader;
+    };
   };
 }

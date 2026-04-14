@@ -1,12 +1,16 @@
-{ lib, config, ... }:
-
-let
+{
+  lib,
+  config,
+  ...
+}: let
   inherit (lib) mkOption types;
   cfg = config.board;
 
   detectedDtbSourceType =
-    if cfg.dtbSource.localPath != "" then "path"
-    else if cfg.dtbSource.git.rev != "" then "git"
+    if cfg.dtbSource.localPath != ""
+    then "path"
+    else if cfg.dtbSource.git.rev != ""
+    then "git"
     else "kernel";
 in {
   options.board = {
@@ -21,14 +25,14 @@ in {
     };
 
     dts = mkOption {
-      type    = types.str;
+      type = types.str;
       default = "";
       description = "Device-tree source filename (e.g. rv1103g-luckfox-pico-plus.dts). If set, compiled to a .dtb at build time.";
     };
 
     dtbSource = {
       type = mkOption {
-        type = types.enum [ "kernel" "git" "path" ];
+        type = types.enum ["kernel" "git" "path"];
         default = detectedDtbSourceType;
         description = ''
           Where to source the DTB from. Auto-detected if not set:
@@ -39,11 +43,31 @@ in {
       };
 
       git = {
-        owner = mkOption { type = types.str; default = ""; description = "GitHub repository owner."; };
-        repo  = mkOption { type = types.str; default = ""; description = "GitHub repository name."; };
-        rev   = mkOption { type = types.str; default = ""; description = "Git revision (tag, branch, or commit hash)."; };
-        hash  = mkOption { type = types.str; default = ""; description = "Nix SRI hash of the git source."; };
-        path  = mkOption { type = types.str; default = ""; description = "Path inside the repository."; };
+        owner = mkOption {
+          type = types.str;
+          default = "";
+          description = "GitHub repository owner.";
+        };
+        repo = mkOption {
+          type = types.str;
+          default = "";
+          description = "GitHub repository name.";
+        };
+        rev = mkOption {
+          type = types.str;
+          default = "";
+          description = "Git revision (tag, branch, or commit hash).";
+        };
+        hash = mkOption {
+          type = types.str;
+          default = "";
+          description = "Nix SRI hash of the git source.";
+        };
+        path = mkOption {
+          type = types.str;
+          default = "";
+          description = "Path inside the repository.";
+        };
         sparseCheckout = mkOption {
           type = types.listOf types.str;
           default = [];

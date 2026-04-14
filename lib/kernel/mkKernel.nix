@@ -1,32 +1,34 @@
-{ pkgs, cfg }:
-
-let
+{
+  pkgs,
+  cfg,
+}: let
   mergedConfig = cfg.kernel.baseConfig // cfg.kernel.structuredConfig;
 
-  src = if cfg.kernel.srcType == "git" then
-    pkgs.fetchFromGitHub {
-      inherit (cfg.kernel.git) owner repo rev hash;
-    }
-  else
-    pkgs.fetchurl {
-      inherit (cfg.kernel.tarball) url hash;
-    };
+  src =
+    if cfg.kernel.srcType == "git"
+    then
+      pkgs.fetchFromGitHub {
+        inherit (cfg.kernel.git) owner repo rev hash;
+      }
+    else
+      pkgs.fetchurl {
+        inherit (cfg.kernel.tarball) url hash;
+      };
 in
+  pkgs.buildLinux {
+    version = cfg.kernel.version;
+    modDirVersion = cfg.kernel.modDirVersion;
 
-pkgs.buildLinux {
-  version       = cfg.kernel.version;
-  modDirVersion = cfg.kernel.modDirVersion;
+    inherit src;
 
-  inherit src;
+    enableCommonConfig = cfg.kernel.enableCommonConfig;
+    autoModules = cfg.kernel.autoModules;
+    preferBuiltin = cfg.kernel.preferBuiltin;
 
-  enableCommonConfig = cfg.kernel.enableCommonConfig;
-  autoModules        = cfg.kernel.autoModules;
-  preferBuiltin      = cfg.kernel.preferBuiltin;
+    structuredExtraConfig = mergedConfig;
 
-  structuredExtraConfig = mergedConfig;
-
-  extraMeta = {
-    description = "Linux kernel for ${cfg.board.name}";
-    platforms   = [ pkgs.stdenv.hostPlatform.system ];
-  };
-}
+    extraMeta = {
+      description = "Linux kernel for ${cfg.board.name}";
+      platforms = [pkgs.stdenv.hostPlatform.system];
+    };
+  }

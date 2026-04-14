@@ -1,12 +1,17 @@
-{ lib, config, ... }:
-
-let
+{
+  lib,
+  config,
+  ...
+}: let
   inherit (lib) mkOption types;
   inherit (lib.kernel) yes;
 
   cfg = config.kernel;
 
-  detectedSrcType = if cfg.git.rev != "" then "git" else "tarball";
+  detectedSrcType =
+    if cfg.git.rev != ""
+    then "git"
+    else "tarball";
 in {
   options.kernel = {
     version = mkOption {
@@ -20,7 +25,7 @@ in {
     };
 
     srcType = mkOption {
-      type = types.enum [ "git" "tarball" ];
+      type = types.enum ["git" "tarball"];
       default = detectedSrcType;
       description = ''
         Kernel source type: 'git' for fetchFromGitHub, 'tarball' for fetchurl.
@@ -80,12 +85,12 @@ in {
     baseConfig = mkOption {
       type = types.attrs;
       default = {
-        EXT4_FS            = yes;
-        TMPFS              = yes;
-        BLK_DEV_INITRD     = yes;
-        RD_GZIP            = yes;
-        OF                 = yes;
-        SERIAL_8250        = yes;
+        EXT4_FS = yes;
+        TMPFS = yes;
+        BLK_DEV_INITRD = yes;
+        RD_GZIP = yes;
+        OF = yes;
+        SERIAL_8250 = yes;
         SERIAL_8250_CONSOLE = yes;
         SERIAL_OF_PLATFORM = yes;
       };
@@ -111,7 +116,7 @@ in {
     };
 
     imageFile = mkOption {
-      type = types.enum [ "Image" "zImage" ];
+      type = types.enum ["Image" "zImage"];
       default = "Image";
       description = "Kernel image filename to copy into the boot partition. Use 'zImage' for compressed ARM kernels.";
     };

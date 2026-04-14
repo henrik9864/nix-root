@@ -1,6 +1,4 @@
-{ lib, ... }:
-
-let
+{lib, ...}: let
   inherit (lib) mkOption mkEnableOption types;
 
   fileOpts = types.submodule {
@@ -85,7 +83,6 @@ let
       };
     };
   };
-
 in {
   options = {
     networking = {
@@ -97,7 +94,7 @@ in {
 
       nameservers = mkOption {
         type = types.listOf types.str;
-        default = [ "1.1.1.1" ];
+        default = ["1.1.1.1"];
         description = "DNS nameservers.";
       };
 
@@ -130,7 +127,7 @@ in {
         };
       });
       default = {
-        root = { gid = 0; };
+        root = {gid = 0;};
       };
       description = "Group definitions.";
     };

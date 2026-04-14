@@ -1,11 +1,11 @@
-{ lib
-, stdenvNoCC
-, fetchFromGitHub
-, autoPatchelfHook
-, stdenv
-, zlib
+{
+  lib,
+  stdenvNoCC,
+  fetchFromGitHub,
+  autoPatchelfHook,
+  stdenv,
+  zlib,
 }:
-
 stdenvNoCC.mkDerivation {
   pname = "upgrade-tool";
   version = "2.1";
@@ -17,8 +17,8 @@ stdenvNoCC.mkDerivation {
     hash = "sha256-G5JeQiJXJVS/biBH07JxU3uNSq1gJfNqT1BHH2Iwm48=";
   };
 
-  nativeBuildInputs = [ autoPatchelfHook ];
-  buildInputs = [ zlib stdenv.cc.cc.lib ];
+  nativeBuildInputs = [autoPatchelfHook];
+  buildInputs = [zlib stdenv.cc.cc.lib];
 
   dontConfigure = true;
   dontBuild = true;
@@ -33,6 +33,6 @@ stdenvNoCC.mkDerivation {
     description = "Rockchip Linux Upgrade Tool v2.1";
     homepage = "https://github.com/vicharak-in/Linux_Upgrade_Tool";
     license = licenses.unfreeRedistributableFirmware;
-    platforms = [ "x86_64-linux" ];
+    platforms = ["x86_64-linux"];
   };
 }

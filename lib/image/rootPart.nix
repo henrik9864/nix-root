@@ -1,6 +1,8 @@
 # Script that creates and populates the ext4 root partition
-{ pkgs, rootfs }:
-
+{
+  pkgs,
+  rootfs,
+}:
 pkgs.writeShellScript "root-partition.sh" ''
   dd if=/dev/zero of=rootfs.ext4 bs=1M count=$ROOTFS_SIZE
   mkfs.ext4 -L rootfs -d ${rootfs} rootfs.ext4

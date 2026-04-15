@@ -65,38 +65,24 @@
 
     projectRegistry = import ./projects/projects.nix;
 
-    projects =
-      builtins.mapAttrs (
-        _: projectModule: let
-          targets = (evalProject {inherit projectModule;}).config.output.targets;
-        in
-          builtins.listToAttrs (map (target: {
-              name = target;
-              value = mkProject {
-                inherit projectModule;
-                outputTarget = target;
-              };
-            })
-            targets)
-      )
-      projectRegistry;
+    mkProjectTargets = projectModule: let
+      projectName = baseNameOf (builtins.dirOf projectModule);
+      targetsList = (evalProject {inherit projectModule;}).config.output.targets;
+    in {
+      name = projectName;
+      value = builtins.listToAttrs (map (target: {
+          name = target;
+          value = mkProject {
+            inherit projectModule;
+            outputTarget = target;
+          };
+        })
+        targetsList);
+    };
 
-    mkAllImages = name: targets: let
-      images = builtins.mapAttrs (_: project: project.image) targets;
-      copyCommands =
-        builtins.concatStringsSep "\n"
-        (nativePkgs.lib.mapAttrsToList
-          (target: image: "cp -r ${image}/* $out/")
-          images);
-    in
-      nativePkgs.runCommand "${name}-all" {} ''
-        mkdir -p $out
-        ${copyCommands}
-      '';
+    projects = builtins.listToAttrs (map mkProjectTargets projectRegistry);
+
   in {
-    packages.x86_64-linux =
-      builtins.mapAttrs mkAllImages projects;
-
     images =
       builtins.mapAttrs (
         _: targets:
@@ -104,20 +90,26 @@
       )
       projects;
 
-    devShells.x86_64-linux = builtins.mapAttrs (
-      _: targets: let
-        board = builtins.head (builtins.attrValues targets);
-      in
-        import ./lib/shells/devshell/mkDevShell.nix {inherit board;}
-    )
-    projects;
+    devShells.x86_64-linux =
+      builtins.mapAttrs (
+        _: targets:
+          builtins.mapAttrs (
+            _: project:
+              import ./lib/shells/devshell/mkDevShell.nix {board = project;}
+          )
+          targets
+      )
+      projects;
 
-    flashShells.x86_64-linux = builtins.mapAttrs (
-      _: targets: let
-        board = builtins.head (builtins.attrValues targets);
-      in
-        import ./lib/shells/flashshell/mkFlashShell.nix {inherit board;}
-    )
-    projects;
+    flashShells.x86_64-linux =
+      builtins.mapAttrs (
+        _: targets:
+          builtins.mapAttrs (
+            _: project:
+              import ./lib/shells/flashshell/mkFlashShell.nix {board = project;}
+          )
+          targets
+      )
+      projects;
   };
 }

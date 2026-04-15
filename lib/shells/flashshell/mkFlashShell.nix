@@ -6,7 +6,7 @@
   bootloader = cfg.bootloader.package;
   method = cfg.flash.method;
   miniloader = cfg.flash.miniloader;
-  image = cfg.flash.image;
+  image = board.image;
 
   # ── Copy commands ────────────────────────────────────────────────
 
@@ -21,17 +21,8 @@
     cp ${miniloader}/*.bin "$FLASH_DIR/"
   '';
 
-  copyImageCmds = lib.optionalString (cfg.flash ? images && cfg.flash.images != []) (
-    builtins.concatStringsSep "\n" (
-      map (f: ''
-        cp ${image}/${f.file} "$FLASH_DIR/${f.file}"
-      '')
-      cfg.flash.images
-    )
-  );
-
-  copyImageCmd = lib.optionalString (cfg.flash ? image && cfg.flash ? imageName) ''
-    cp ${image} "$FLASH_DIR/${cfg.flash.imageName}"
+  copyImageCmds = ''
+    cp -r ${image}/* "$FLASH_DIR/"
   '';
 
   copyUpgradeToolCmd = lib.optionalString (method == "upgrade_tool") ''
@@ -97,7 +88,7 @@ in
       ${copyBootloaderCmds}
       ${copyMiniloaderCmd}
       ${copyImageCmds}
-      ${copyImageCmd}
+      ${copyImageCmds}
       ${copyUpgradeToolCmd}
 
       cleanup() {

@@ -54,5 +54,5 @@ in rec {
 
   serial.console = "ttyS2,1500000";
 
-  output.targets = ["sd"];
+  output.targets = ["sd" "spinand"];
 }

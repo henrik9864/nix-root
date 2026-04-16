@@ -1,0 +1,59 @@
+{lib, ...}: let
+  inherit (lib) mkOption types;
+in {
+  options.spinand = {
+    pageSize = mkOption {
+      type = types.int;
+      default = 2048;
+      description = "NAND page size in bytes.";
+    };
+
+    eraseBlockSize = mkOption {
+      type = types.int;
+      default = 131072; # 128 KiB
+      description = "NAND erase block size in bytes. Used as the JFFS2 erase unit size.";
+    };
+
+    idblockSizeKiB = mkOption {
+      type = types.int;
+      default = 2048; # 2 MiB
+      description = "IDB/loader partition size in KiB.";
+    };
+
+    ubootSizeKiB = mkOption {
+      type = types.int;
+      default = 1024; # 1 MiB
+      description = "U-Boot partition size in KiB.";
+    };
+
+    miscSizeKiB = mkOption {
+      type = types.int;
+      default = 64;
+      description = "Misc partition size in KiB.";
+    };
+
+    bootSizeKiB = mkOption {
+      type = types.int;
+      default = 16384; # 16 MiB
+      description = "Boot partition size in KiB. Must fit the FIT image (kernel + DTB + initrd).";
+    };
+
+    kernelLoadAddr = mkOption {
+      type = types.str;
+      default = "0x00408000";
+      description = "Kernel load and entry address passed to mkimage.";
+    };
+
+    initrdLoadAddr = mkOption {
+      type = types.str;
+      default = "0x0A000000";
+      description = "Initial ramdisk load address passed to mkimage.";
+    };
+
+    envDataSizeKiB = mkOption {
+      type = types.int;
+      default = 32;
+      description = "U-Boot environment size in KiB. Must match CONFIG_ENV_SIZE in the U-Boot defconfig.";
+    };
+  };
+}

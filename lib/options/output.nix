@@ -1,8 +1,4 @@
-{
-  lib,
-  config,
-  ...
-}: let
+{lib, config, ...}: let
   inherit (lib) mkOption types;
 
   cfg = config.output;
@@ -11,14 +7,17 @@
     sd = {
       rootDevice = "/dev/mmcblk1p2";
       imageSuffix = "-sd";
+      rootfsType = "ext4";
     };
     emmc = {
       rootDevice = "/dev/mmcblk0p2";
       imageSuffix = "-emmc";
+      rootfsType = "ext4";
     };
     spinand = {
-      rootDevice = "/dev/mtdblock2";
+      rootDevice = "/dev/mtdblock4";
       imageSuffix = "-spinand";
+      rootfsType = "jffs2";
     };
   };
 
@@ -39,9 +38,9 @@ in {
       default = "sd";
       description = ''
         Boot target medium for this specific build.
-        'sd' generates an image for SD card (root=/dev/mmcblk1p2).
-        'emmc' generates an image for eMMC (root=/dev/mmcblk0p2).
-        'spinand' generates an image for SPI NAND flash (root=/dev/mtdblock2).
+        'sd'      — SD card  (root=/dev/mmcblk1p2).
+        'emmc'    — eMMC     (root=/dev/mmcblk0p2).
+        'spinand' — SPI NAND (root=/dev/mtdblock4, rootfstype=jffs2).
       '';
     };
 
@@ -59,6 +58,15 @@ in {
       default = defaults.imageSuffix;
       description = ''
         Suffix appended to the image filename.
+        Derived from output.target if not set.
+      '';
+    };
+
+    rootfsType = mkOption {
+      type = types.str;
+      default = defaults.rootfsType;
+      description = ''
+        Root filesystem type passed to the kernel (rootfstype=...).
         Derived from output.target if not set.
       '';
     };

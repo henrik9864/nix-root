@@ -55,7 +55,7 @@
         pkgs = cfg._nativePkgs;
         inherit rootfs;
       };
-      image = import ./lib/image/mkImage.nix {
+      image = import (./lib/image + "/${outputTarget}") {
         pkgs = cfg._nativePkgs;
         inherit cfg bootloader kernel initrd rootfs;
       };

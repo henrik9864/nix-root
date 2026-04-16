@@ -1,5 +1,4 @@
 {targets}: let
-  # All targets share the same board config, grab it from the first
   anyTarget = builtins.head (builtins.attrValues targets);
   cfg = anyTarget.cfg;
   nativePkgs = cfg._nativePkgs;
@@ -8,8 +7,6 @@
   bootloader = cfg.bootloader.package;
   method = cfg.flash.method;
   miniloader = cfg.flash.miniloader;
-
-  # ── Copy commands ────────────────────────────────────────────────
 
   copyBootloaderCmds = builtins.concatStringsSep "\n" (
     map (f: ''
@@ -37,22 +34,33 @@
     EOF
   '';
 
-  # ── Flash scripts ────────────────────────────────────────────────
-
   miniloaderBin =
     if miniloader != null
     then builtins.head (builtins.attrNames (builtins.readDir "${miniloader}"))
     else "miniloader.bin";
 
   mkFlashScript = targetName: project: let
+    scriptName = "flash-${targetName}.sh";
     imageName = builtins.head (builtins.attrNames (builtins.readDir "${project.image}"));
     imagePath = "images/${imageName}";
-    scriptName = "flash-${targetName}.sh";
-    targetMethod = if targetName == "spinand" then "upgrade_tool" else "dd";
+    dispatchKey = if targetName == "spinand" then "spinand" else cfg.flash.method;
+    flashScriptFor = {
+      spinand = import ./scripts/flashSpinand.nix {
+        pkgs = nativePkgs;
+        inherit miniloaderBin scriptName;
+      };
+      upgrade_tool = import ./scripts/flashUpgradeTool.nix {
+        pkgs = nativePkgs;
+        inherit miniloaderBin imagePath scriptName;
+      };
+      dd = import ./scripts/flashDd.nix {
+        pkgs = nativePkgs;
+        bootloaderFiles = cfg.bootloader.files;
+        inherit imagePath scriptName;
+      };
+    };
   in
-    if targetMethod == "upgrade_tool"
-    then import ./scripts/flashUpgradeTool.nix {pkgs = nativePkgs; inherit miniloaderBin imagePath scriptName;}
-    else import ./scripts/flashDd.nix {pkgs = nativePkgs; bootloaderFiles = cfg.bootloader.files; inherit imagePath scriptName;};
+    flashScriptFor.${dispatchKey};
 
   flashScripts = builtins.mapAttrs mkFlashScript targets;
 
@@ -64,8 +72,6 @@
       '') flashScripts
     )
   );
-
-  # ── Packages ───────────────────────────────────────────────────
 
   hasSpinand = builtins.elem "spinand" (builtins.attrNames targets);
 
@@ -101,9 +107,6 @@ in
       echo "══════════════════════════════════════════════════════"
       echo ""
       echo "Flash dir: $FLASH_DIR"
-      echo ""
-      echo "Images:"
-      ls -la "$FLASH_DIR/images/"
       echo ""
       echo "Available flash scripts:"
       for s in "$FLASH_DIR"/flash-*.sh; do

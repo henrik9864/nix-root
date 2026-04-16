@@ -9,6 +9,7 @@
 }: let
   kernelImageFile = cfg.kernel.imageFile;
   rootDevice = cfg.output.rootDevice;
+  rootfsType = cfg.output.rootfsType;
 
   consoleArgs =
     "console=${cfg.serial.console} console=tty1"
@@ -34,7 +35,7 @@ in
       KERNEL  /${kernelImageFile}
       INITRD  /initrd
       FDT     /${dtbName}
-      APPEND  ${consoleArgs} root=${rootDevice} rootfstype=ext4 rootwait rw init=/init
+      APPEND  ${consoleArgs} root=${rootDevice} rootfstype=${rootfsType} rootwait rw init=/init
     CONF
 
       mmd   -i boot.fat ::/extlinux

@@ -43,10 +43,34 @@ in rec {
   kernel.structuredConfig = {
     ARCH_ROCKCHIP = yes;
     ROCKCHIP_PM_DOMAINS = yes;
+
+    # MMC / SD / eMMC
     MMC = yes;
     MMC_SDHCI = yes;
     MMC_SDHCI_PLTFM = yes;
     MMC_SDHCI_OF_DWCMSHC = yes;
+
+    # SPI
+    SPI = yes;
+    SPI_MASTER = yes;
+    SPI_ROCKCHIP = yes; # Rockchip SPI controller
+
+    # MTD / SPI NAND
+    MTD = yes;
+    MTD_BLOCK = yes;           # exposes NAND as /dev/mtdblockN
+    MTD_SPI_NAND = yes;        # SPI NAND framework
+    MTD_SPINAND_WINBOND = yes; # Winbond W25N (common on luckfox)
+    MTD_SPINAND_GIGADEVICE = yes;
+    MTD_SPINAND_MACRONIX = yes;
+    MTD_SPINAND_TOSHIBA = yes;
+
+    # JFFS2 — rootfs and boot partition filesystem on NAND
+    JFFS2_FS = yes;
+    JFFS2_FS_WRITEBUFFER = yes; # mandatory for NAND
+    JFFS2_ZLIB = yes;
+    JFFS2_RTIME = yes;
+    LZO_COMPRESS = yes;
+    JFFS2_LZO = yes;
   };
 
   image.bootPadding = 8;

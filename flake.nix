@@ -104,11 +104,7 @@
     flashShells.x86_64-linux =
       builtins.mapAttrs (
         _: targets:
-          builtins.mapAttrs (
-            _: project:
-              import ./lib/shells/flashshell/mkFlashShell.nix {board = project;}
-          )
-          targets
+          import ./lib/shells/flashshell/mkFlashShell.nix {inherit targets;}
       )
       projects;
   };

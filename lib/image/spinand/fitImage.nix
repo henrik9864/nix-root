@@ -64,18 +64,23 @@
   '';
 in
   pkgs.writeShellScript "fit-image.sh" ''
-    cp ${dtbFile} device.dtb
-    fdtput -t s device.dtb /chosen bootargs "${bootArgs}"
+    WORKDIR=$(mktemp -d)
+    trap 'rm -rf "$WORKDIR"' EXIT
 
-    mkdir -p fit-staging
-    cp ${kernel}/${kernelImageFile} fit-staging/${kernelImageFile}
-    cp device.dtb                   fit-staging/${dtbName}
-    cp ${initrd}/initrd             fit-staging/initrd
+    cp ${dtbFile} "$WORKDIR/device.dtb"
+    chmod u+w "$WORKDIR/device.dtb"
+    fdtput -t s "$WORKDIR/device.dtb" /chosen bootargs "${bootArgs}"
 
-    cat > fit-staging/boot.its << 'ITS'
+    mkdir -p "$WORKDIR/fit-staging"
+    cp ${kernel}/${kernelImageFile} "$WORKDIR/fit-staging/${kernelImageFile}"
+    cp "$WORKDIR/device.dtb"        "$WORKDIR/fit-staging/${dtbName}"
+    cp ${initrd}/initrd             "$WORKDIR/fit-staging/initrd"
+
+    cat > "$WORKDIR/fit-staging/boot.its" << 'ITS'
     ${bootIts}
     ITS
 
-    (cd fit-staging && mkimage -f boot.its ../boot.img)
-    cp boot.img $out/boot.img
+    (cd "$WORKDIR/fit-staging" && mkimage -f boot.its "$WORKDIR/boot.img")
+    cp "$WORKDIR/boot.img" $out/boot.img
   ''
+

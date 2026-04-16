@@ -52,7 +52,7 @@ in
 
     nativeBuildInputs = with pkgs; [
       ubootTools
-      mtd-utils
+      mtdutils
       dtc
     ];
 

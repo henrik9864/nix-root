@@ -45,9 +45,14 @@
     imagePath = "images/${imageName}";
     dispatchKey = if targetName == "spinand" then "spinand" else cfg.flash.method;
     flashScriptFor = {
-      spinand = import ./scripts/flashSpinand.nix {
+      spinand = let
+        s = cfg.spinand;
+        ubootSector    = (s.idblockSizeKiB) * 2;
+        bootSector     = (s.idblockSizeKiB + s.ubootSizeKiB + s.miscSizeKiB) * 2;
+        userdataSector = (s.idblockSizeKiB + s.ubootSizeKiB + s.miscSizeKiB + s.bootSizeKiB) * 2;
+      in import ./scripts/flashSpinand.nix {
         pkgs = nativePkgs;
-        inherit miniloaderBin scriptName;
+        inherit miniloaderBin scriptName ubootSector bootSector userdataSector;
       };
       upgrade_tool = import ./scripts/flashUpgradeTool.nix {
         pkgs = nativePkgs;

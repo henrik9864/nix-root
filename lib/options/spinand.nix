@@ -14,6 +14,12 @@ in {
       description = "NAND erase block size in bytes. Used as the JFFS2 erase unit size.";
     };
 
+    envSizeKiB = mkOption {
+      type = types.int;
+      default = 1024; # 1 MiB
+      description = "U-Boot env partition size in KiB.";
+    };
+
     idblockSizeKiB = mkOption {
       type = types.int;
       default = 2048; # 2 MiB
@@ -22,13 +28,13 @@ in {
 
     ubootSizeKiB = mkOption {
       type = types.int;
-      default = 1024; # 1 MiB
+      default = 256;
       description = "U-Boot partition size in KiB.";
     };
 
     miscSizeKiB = mkOption {
       type = types.int;
-      default = 64;
+      default = 128;
       description = "Misc partition size in KiB.";
     };
 

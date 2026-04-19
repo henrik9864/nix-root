@@ -32,20 +32,65 @@
             }
             export -f installPhase
 
+            runPhaseVar() {
+              local name="$1"
+              local body="''${!name-}"
+              if [ -n "$body" ]; then
+                eval "$body"
+              elif declare -F "$name" >/dev/null; then
+                "$name"
+              else
+                echo "No $name defined."
+              fi
+            }
+            export -f runPhaseVar
+
+            run-unpack() {
+              echo ">>> unpackPhase"
+              (cd "$BUILD_DIR" && runPhaseVar unpackPhase)
+            }
+
+            run-patch() {
+              run-unpack
+              cd "$BUILD_DIR/$sourceRoot"
+              echo ">>> patchPhase"
+              runPhaseVar patchPhase
+            }
+
+            run-configure() {
+              run-patch
+              echo ">>> configurePhase"
+              runPhaseVar configurePhase
+            }
+
+            run-build() {
+              run-configure
+              echo ">>> buildPhase"
+              runPhaseVar buildPhase
+            }
+
+            run-install() {
+              run-build
+              export out="$BUILD_DIR/out"
+              mkdir -p "$out"
+              echo ">>> installPhase"
+              runPhaseVar installPhase
+            }
+
+            export -f run-unpack run-patch run-configure run-build run-install
+
             echo ""
             echo "══════════════════════════════════════════════════════"
             echo "  ${pkg.pname} dev shell"
             echo "  Build dir: $BUILD_DIR"
             echo "══════════════════════════════════════════════════════"
             echo ""
-            echo "Build steps:"
-            echo "  unpackPhase"
-            echo "  cd \$sourceRoot"
-            echo "  patchPhase"
-            echo "  configurePhase"
-            echo "  buildPhase"
-            echo "  export out=\$BUILD_DIR/out"
-            echo "  installPhase"
+            echo "Jump commands (each runs all preceding steps first):"
+            echo "  run-unpack"
+            echo "  run-patch"
+            echo "  run-configure"
+            echo "  run-build"
+            echo "  run-install"
             echo ""
 
             cd "$BUILD_DIR"

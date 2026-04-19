@@ -11,11 +11,12 @@
   openssl,
   pkg-config,
   gcc-arm-embedded,
+  which,
   buildPackages,
   defconfig ? "luckfox_rv1106_uboot",
+  configFragments ? [],
 }: let
   kcflags = "-Wno-error=enum-int-mismatch -Wno-error=address -Wno-error=maybe-uninitialized";
-  hostcc = lib.getExe buildPackages.stdenv.cc;
 in
   stdenv.mkDerivation (finalAttrs: {
     pname = "uboot-luckfox-pico";
@@ -47,6 +48,7 @@ in
       openssl
       pkg-config
       gcc-arm-embedded
+      which
     ];
 
     enableParallelBuilding = true;
@@ -59,16 +61,22 @@ in
       patchShebangs .
     '';
 
+    configurePhase = ''
+      runHook preConfigure
+      make ${defconfig}_defconfig ${lib.concatStringsSep " " configFragments} CROSS_COMPILE=arm-none-eabi-
+      runHook postConfigure
+    '';
+
     buildPhase = ''
       runHook preBuild
-      KCFLAGS="${kcflags}" ./make.sh ${defconfig} --spl-new CROSS_COMPILE=arm-none-eabi-
+      KCFLAGS="${kcflags}" ./make.sh --spl-new CROSS_COMPILE=arm-none-eabi-
       runHook postBuild
     '';
 
     installPhase = ''
       runHook preInstall
       mkdir -p $out
-      cp u-boot.bin $out/
+      cp uboot.img $out/
       cp *_download_*.bin $out/miniall.bin
       cp *_idblock_*.img $out/idblock.img
       runHook postInstall

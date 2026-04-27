@@ -59,7 +59,7 @@ in
     buildCommand = ''
       mkdir -p $out
 
-      cp ${bootloader}/u-boot.img $out/uboot.img
+      cp ${bootloader}/uboot.img  $out/uboot.img
       cp ${parameterFile}         $out/parameter.txt
 
       source ${fitImageScript}

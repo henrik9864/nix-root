@@ -52,7 +52,7 @@
         userdataSector = (s.idblockSizeKiB + s.ubootSizeKiB + s.miscSizeKiB + s.bootSizeKiB) * 2;
       in import ./scripts/flashSpinand.nix {
         pkgs = nativePkgs;
-        inherit miniloaderBin scriptName ubootSector bootSector userdataSector;
+        inherit miniloaderBin scriptName;
       };
       upgrade_tool = import ./scripts/flashUpgradeTool.nix {
         pkgs = nativePkgs;

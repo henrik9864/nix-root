@@ -2,9 +2,6 @@
   pkgs,
   miniloaderBin,
   scriptName,
-  ubootSector,
-  bootSector,
-  userdataSector,
 }:
 pkgs.writeShellScript scriptName ''
   #!/usr/bin/env bash
@@ -12,20 +9,14 @@ pkgs.writeShellScript scriptName ''
 
   SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-  echo "[1/5] Loading miniloader to RAM..."
+  echo "[1/4] Loading miniloader to RAM..."
   upgrade_tool db "$SCRIPT_DIR/firmware/${miniloaderBin}"
 
-  echo "[2/5] Writing IDB loader to NAND at sector 0..."
-  upgrade_tool wl 0 "$SCRIPT_DIR/firmware/${miniloaderBin}"
+  echo "[2/4] Writing IDB loader (SPL/DDR init) at sector 0x200..."
+  upgrade_tool wl 0x800 "$SCRIPT_DIR/firmware/idblock.img"
 
-  echo "[3/5] Writing U-Boot (sector ${toString ubootSector})..."
-  upgrade_tool wl ${toString ubootSector} "$SCRIPT_DIR/images/uboot.img"
-
-  echo "[4/5] Writing boot image (sector ${toString bootSector})..."
-  upgrade_tool wl ${toString bootSector} "$SCRIPT_DIR/images/boot.img"
-
-  echo "[5/5] Writing rootfs (sector ${toString userdataSector})..."
-  upgrade_tool wl ${toString userdataSector} "$SCRIPT_DIR/images/rootfs.jffs2"
+  echo "[3/4] Writing U-Boot at sector 0x400..."
+  upgrade_tool wl 0x4000 "$SCRIPT_DIR/firmware/uboot.img"
 
   upgrade_tool rd
   echo "Done."

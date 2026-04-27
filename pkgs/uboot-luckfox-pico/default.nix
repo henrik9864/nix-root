@@ -14,9 +14,18 @@
   which,
   buildPackages,
   defconfig ? "luckfox_rv1106_uboot",
-  configFragments ? [],
+  configOverrides ? {CONFIG_SPL_FIT_HW_CRYPTO = false;},
 }: let
   kcflags = "-Wno-error=enum-int-mismatch -Wno-error=address -Wno-error=maybe-uninitialized";
+  applyConfigOverrides = let
+    applyOverride = name: value:
+      if value == true
+      then "${name}=y"
+      else if value == false
+      then "# ${name} is not set"
+      else "${name}=${value}";
+  in
+    lib.concatStringsSep "\n" (lib.mapAttrsToList applyOverride configOverrides);
 in
   stdenv.mkDerivation (finalAttrs: {
     pname = "uboot-luckfox-pico";
@@ -59,17 +68,25 @@ in
 
     postPatch = ''
       patchShebangs .
+
+      sed -i '/\t\t\tsignature {/,/\t\t\t};/d' arch/arm/mach-rockchip/fit_nodes.sh
     '';
 
     configurePhase = ''
       runHook preConfigure
-      make ${defconfig}_defconfig ${lib.concatStringsSep " " configFragments} CROSS_COMPILE=arm-none-eabi-
+      make ${defconfig}_defconfig CROSS_COMPILE=arm-none-eabi-
+      ${lib.optionalString (configOverrides != {}) ''        cat >> .config <<EOF
+        ${applyConfigOverrides}
+        EOF
+      ''}
+      make olddefconfig CROSS_COMPILE=arm-none-eabi-
+      cp .config configs/${defconfig}_nix_defconfig
       runHook postConfigure
     '';
 
     buildPhase = ''
       runHook preBuild
-      KCFLAGS="${kcflags}" ./make.sh --spl-new CROSS_COMPILE=arm-none-eabi-
+      KCFLAGS="${kcflags}" ./make.sh ${defconfig}_nix CROSS_COMPILE=arm-none-eabi-
       runHook postBuild
     '';
 
@@ -90,3 +107,7 @@ in
       platforms = platforms.linux;
     };
   })
+
+# TODO Document making pkg shell 
+# TODO investigate and document ways to enter pkg shell with paramenters
+# TODO also investigate and docment ways to bring custom packages into flash writeShellScript

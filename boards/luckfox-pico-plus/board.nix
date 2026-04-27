@@ -18,11 +18,44 @@ in rec {
     sparseCheckout = ["sysdrv/source/kernel"];
   };
 
-  bootloader.package = pkgs.uboot-luckfox-pico;
+  bootloader.package = pkgs.uboot-luckfox-pico.override {
+    #defconfig = "luckfox_rv1106_spi_nand_tb";
+    defconfig = "luckfox_rv1106_uboot";
+    configOverrides = {
+      CONFIG_DEBUG = true;
+      CONFIG_SPL_DEBUG = true;
+
+      CONFIG_SPL_FIT_SIGNATURE = false;
+      CONFIG_SPL_FIT_HW_CRYPTO = false;
+
+      CONFIG_MTD = true;
+      CONFIG_DM_MTD = true;
+      CONFIG_MTD_SPI_NAND = true;
+      CONFIG_SPI_NAND = true;
+      CONFIG_SPL_SPI_NAND_SUPPORT = true;
+
+      CONFIG_SPL_ROCKCHIP_BACK_TO_BROM = true;
+      #CONFIG_SPL_SPI_LOAD = true;
+
+      #CONFIG_SPL_MAX_SIZE = "0x10000";
+
+      #CONFIG_SPL_LZMA = false;
+      #CONFIG_SPL_ZLIB = false;
+      #CONFIG_SPL_GZIP = false;
+
+      #CONFIG_SPL_SPI_NAND_MTD = true;
+      #CONFIG_SPL_MTD_SPINAND = true;
+      CONFIG_SPL_SPI_NAND_WINBOND = true;
+    };
+  };
   bootloader.files = [
     {
-      file = "u-boot.bin";
+      file = "idblock.img";
       offset = 64;
+    }
+    {
+      file = "uboot.img";
+      offset = 16384;
     }
   ];
 
@@ -57,8 +90,8 @@ in rec {
 
     # MTD / SPI NAND
     MTD = yes;
-    MTD_BLOCK = yes;           # exposes NAND as /dev/mtdblockN
-    MTD_SPI_NAND = yes;        # SPI NAND framework
+    MTD_BLOCK = yes; # exposes NAND as /dev/mtdblockN
+    MTD_SPI_NAND = yes; # SPI NAND framework
     MTD_SPINAND_WINBOND = yes; # Winbond W25N (common on luckfox)
     MTD_SPINAND_GIGADEVICE = yes;
     MTD_SPINAND_MACRONIX = yes;

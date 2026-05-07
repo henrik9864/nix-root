@@ -61,5 +61,32 @@ in {
       default = 32;
       description = "U-Boot environment size in KiB. Must match CONFIG_ENV_SIZE in the U-Boot defconfig.";
     };
+
+    ubiVols = mkOption {
+      type = types.listOf (types.attrs);
+      default = [
+        { id = 0; name = "boot"; size = 16 * 1024 * 1024; }    # 16 MiB for kernel/FIT
+        { id = 1; name = "rootfs"; size = 128 * 1024 * 1024; } # 128 MiB for rootfs
+      ];
+      description = "UBI volumes for combined kernel/rootfs image. Each volume is an attribute set with id, name, and size (in bytes).";
+    };
+
+    ubiSubPageSize = mkOption {
+      type = types.int;
+      default = 2048;
+      description = "UBI sub-page size in bytes (usually NAND page size). Used for mkfs.ubifs and ubinize -m argument.";
+    };
+
+    ubiPebSize = mkOption {
+      type = types.int;
+      default = 131072; # 128 KiB
+      description = "UBI physical eraseblock size in bytes (used for ubinize -p argument). Should match eraseBlockSize.";
+    };
+
+    ubiMinSize = mkOption {
+      type = types.int;
+      default = 2048;
+      description = "UBI minimum I/O unit size in bytes (used for ubinize -s argument). Usually NAND page size.";
+    };
   };
 }

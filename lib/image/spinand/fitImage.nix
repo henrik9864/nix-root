@@ -17,7 +17,8 @@
       #address-cells = <1>;
 
       images {
-        kernel@1 {
+        kernel {
+
           description = "Linux kernel";
           data = /incbin/("${kernelImageFile}");
           type = "kernel";
@@ -26,19 +27,21 @@
           compression = "none";
           load = <${s.kernelLoadAddr}>;
           entry = <${s.kernelLoadAddr}>;
-          hash@1 { algo = "crc32"; };
+          hash { algo = "crc32"; };
         };
 
-        fdt@1 {
+        fdt {
+
           description = "Flattened Device Tree blob";
           data = /incbin/("${dtbName}");
           type = "flat_dt";
           arch = "arm";
           compression = "none";
-          hash@1 { algo = "crc32"; };
+          hash { algo = "crc32"; };
         };
 
-        ramdisk@1 {
+        ramdisk {
+
           description = "Initial ramdisk";
           data = /incbin/("initrd");
           type = "ramdisk";
@@ -47,17 +50,17 @@
           compression = "none";
           load = <${s.initrdLoadAddr}>;
           entry = <${s.initrdLoadAddr}>;
-          hash@1 { algo = "crc32"; };
+          hash { algo = "crc32"; };
         };
       };
 
       configurations {
-        default = "conf@1";
-        conf@1 {
+        default = "conf";
+        conf {
           description = "${cfg.board.name}";
-          kernel = "kernel@1";
-          fdt = "fdt@1";
-          ramdisk = "ramdisk@1";
+        kernel = "kernel";
+        fdt = "fdt";
+        ramdisk = "ramdisk";
         };
       };
     };

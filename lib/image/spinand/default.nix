@@ -7,7 +7,7 @@
   rootfs,
 }: let
   dtb = import ../common/dtb.nix {inherit pkgs cfg kernel;};
-  inherit (dtb) dtbName dtbFile;
+  inherit (dtb) dtbName dtsName dtbFile dtsFile dtbOutput;
 
   s = cfg.spinand;
 
@@ -33,15 +33,21 @@
     + " rootfstype=${cfg.output.rootfsType}"
     + " rootwait rw init=/init";
 
-  fitImageScript = import ./fitImage.nix {inherit pkgs cfg kernel initrd dtbName dtbFile bootArgs;};
-  jffs2RootfsScript = import ./jffs2Rootfs.nix {
-    inherit pkgs rootfs;
+  ubiImageScript = import ./ubiRootfs.nix {
+    inherit pkgs cfg kernel initrd dtbName dtbFile rootfs;
     eraseBlockSize = s.eraseBlockSize;
+    ubiMinSize = s.ubiMinSize;
+    ubiSubPageSize = s.ubiSubPageSize;
+    ubiPebSize = s.ubiPebSize;
+    ubiVols = s.ubiVols;
+    inherit bootArgs;
   };
+
   ubootEnvScript = import ./ubootEnv.nix {
     inherit pkgs bootArgs mtdParts bootOffsetBytes bootSizeBytes;
     envDataSizeKiB = s.envDataSizeKiB;
   };
+
   parameterFile = import ./parameter.nix {
     inherit pkgs mtdParts;
     boardName = cfg.board.name;
@@ -59,11 +65,23 @@ in
     buildCommand = ''
       mkdir -p $out
 
-      cp ${bootloader}/uboot.img  $out/uboot.img
-      cp ${parameterFile}         $out/parameter.txt
+      cp ${bootloader}/uboot.img $out/uboot.img
+      cp ${kernel}/zImage        $out/kernel.img
 
-      source ${fitImageScript}
-      source ${jffs2RootfsScript}
+      cp ${dtbFile} $out/devicetree.dtb
+
+      ${
+        if dtsFile != null
+        then "cp ${dtsFile} $out/devicetree.dts"
+        else ""
+      }
+
+      cp ${parameterFile} $out/parameter.txt
+
+      # Optional: keep original DTB build output directory available by copying contents
+      #cp -r ${dtbOutput} $out/dtb-output
+
+      source ${ubiImageScript}
       source ${ubootEnvScript}
     '';
   }

@@ -3,22 +3,15 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    pkgs-custom.url = "path:./pkgs";
   };
 
   outputs = {
-    self,
+		self,
     nixpkgs,
-    pkgs-custom,
   }: let
     overlays = [
       (final: prev: import ./pkgs/default.nix {callPackage = final.callPackage;})
     ];
-
-    nativePkgs = import nixpkgs {
-      system = "x86_64-linux";
-      inherit overlays;
-    };
 
     boards = import ./boards;
 
@@ -81,31 +74,26 @@
     };
 
     projects = builtins.listToAttrs (map mkProjectTargets projectRegistry);
-
   in {
     images =
-      builtins.mapAttrs (
+      projects
+      |> builtins.mapAttrs (
         _: targets:
-          builtins.mapAttrs (_: project: project.image) targets
-      )
-      projects;
+          targets
+          |> builtins.mapAttrs (_: project: project.image)
+      );
 
     devShells.x86_64-linux =
-      builtins.mapAttrs (
+      projects
+      |> builtins.mapAttrs (
         _: targets:
-          builtins.mapAttrs (
-            _: project:
-              import ./lib/shells/devshell/mkDevShell.nix {board = project;}
-          )
           targets
-      )
-      projects;
+          |> builtins.mapAttrs (_: project: import ./lib/shells/devshell/mkDevShell.nix {board = project;})
+      );
 
     flashShells.x86_64-linux =
-      builtins.mapAttrs (
-        _: targets:
-          import ./lib/shells/flashshell/mkFlashShell.nix {inherit targets;}
-      )
-      projects;
+      projects
+      |> builtins.mapAttrs
+      (_: targets: import ./lib/shells/flashshell/mkFlashShell.nix {inherit targets;});
   };
 }

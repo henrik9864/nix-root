@@ -1,14 +1,11 @@
 let
   contents = builtins.readDir ./.;
 
-  dirs =
-    builtins.filter
-    (name: contents.${name} == "directory")
-    (builtins.attrNames contents);
-
-  hasProject = name:
-    builtins.pathExists (./. + "/${name}/project.nix");
-
-  projectDirs = builtins.filter hasProject dirs;
+  projectDirs =
+    contents
+    |> builtins.attrNames
+    |> builtins.filter (name: contents.${name} == "directory")
+    |> builtins.filter (name: builtins.pathExists (./. + "/${name}/project.nix"));
 in
-  map (dir: ./. + "/${dir}/project.nix") projectDirs
+  projectDirs
+  |> map (dir: ./. + "/${dir}/project.nix")

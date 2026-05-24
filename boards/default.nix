@@ -1,18 +1,15 @@
 let
   contents = builtins.readDir ./.;
 
-  dirs =
-    builtins.filter
-    (name: contents.${name} == "directory")
-    (builtins.attrNames contents);
-
-  hasBoard = name:
-    builtins.pathExists (./. + "/${name}/board.nix");
-
-  boardDirs = builtins.filter hasBoard dirs;
+  boardDirs =
+    contents
+    |> builtins.attrNames
+    |> builtins.filter (name: contents.${name} == "directory")
+    |> builtins.filter (name: builtins.pathExists (./. + "/${name}/board.nix"));
 in
-  builtins.listToAttrs (map (dir: {
-      name = dir;
-      value = ./. + "/${dir}/board.nix";
-    })
-    boardDirs)
+  boardDirs
+  |> map (dir: {
+    name = dir;
+    value = ./. + "/${dir}/board.nix";
+  })
+  |> builtins.listToAttrs

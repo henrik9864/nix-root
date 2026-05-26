@@ -7,11 +7,10 @@
 in {
   options.flash = {
     method = mkOption {
-      type = types.enum ["upgrade_tool" "dd"];
+      type = types.enum ["spinand" "dd"];
       default = "dd";
       description = ''
         Flash method for installing firmware onto the board.
-        "upgrade_tool" — Rockchip USB maskrom flashing (proprietary).
         "dd"           — Direct sector writes to a block device.
       '';
     };

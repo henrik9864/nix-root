@@ -1,5 +1,5 @@
 {targets}: let
-  anyTarget = builtins.head (builtins.attrValues targets);
+  anyTarget = (builtins.attrValues targets) |> builtins.head;
   cfg = anyTarget.cfg;
   nativePkgs = cfg._nativePkgs;
   lib = nativePkgs.lib;
@@ -8,79 +8,62 @@
   method = cfg.flash.method;
   miniloader = cfg.flash.miniloader;
 
-  copyBootloaderCmds = builtins.concatStringsSep "\n" (
-    map (f: ''
+  copyBootloaderCmds = cfg.bootloader.files
+    |> map (f: ''
       cp ${bootloader}/${f.file} "$FLASH_DIR/firmware/${f.file}"
     '')
-    cfg.bootloader.files
-  );
+    |> builtins.concatStringsSep "\n";
 
   copyMiniloaderCmd = lib.optionalString (miniloader != null) ''
     cp ${miniloader}/*.bin "$FLASH_DIR/firmware/"
   '';
 
-  copyImageCmds = builtins.concatStringsSep "\n" (
-    builtins.attrValues (
-      builtins.mapAttrs (_: project: ''
+  copyImageCmds = targets
+    |> builtins.mapAttrs (_: project: ''
         cp -r ${project.image}/* "$FLASH_DIR/images/"
       '')
-      targets
-    )
-  );
-
-  copyUpgradeToolCmd = lib.optionalString (method == "upgrade_tool") ''
-        cat > "$FLASH_DIR/config.ini" << 'EOF'
-    [System]
-    EOF
-  '';
+    |> builtins.attrValues
+    |> builtins.concatStringsSep "\n";
 
   miniloaderBin =
     if miniloader != null
-    then builtins.head (builtins.attrNames (builtins.readDir "${miniloader}"))
+    then "${miniloader}" |> builtins.readDir |> builtins.attrNames |> builtins.head
     else "miniloader.bin";
 
   mkFlashScript = targetName: project: let
     scriptName = "flash-${targetName}.sh";
-    imageName = builtins.head (builtins.attrNames (builtins.readDir "${project.image}"));
+    imageName = "${project.image}" |> builtins.readDir |> builtins.attrNames |> builtins.head;
     imagePath = "images/${imageName}";
-    dispatchKey = if targetName == "spinand" then "spinand" else cfg.flash.method;
-    flashScriptFor = {
-      spinand = let
-        s = cfg.spinand;
-        ubootSector    = (s.idblockSizeKiB) * 2;
-        bootSector     = (s.idblockSizeKiB + s.ubootSizeKiB + s.miscSizeKiB) * 2;
-        userdataSector = (s.idblockSizeKiB + s.ubootSizeKiB + s.miscSizeKiB + s.bootSizeKiB) * 2;
-      in import ./scripts/flashSpinand.nix {
+    method = if targetName == "spinand" then "spinand" else cfg.flash.method;
+  in
+    if method == "spinand" then
+      import ./scripts/flashSpinand.nix {
         pkgs = nativePkgs;
         inherit miniloaderBin scriptName;
-      };
-      upgrade_tool = import ./scripts/flashUpgradeTool.nix {
-        pkgs = nativePkgs;
-        inherit miniloaderBin imagePath scriptName;
-      };
-      dd = import ./scripts/flashDd.nix {
+      }
+    else if method == "dd" then
+      import ./scripts/flashDd.nix {
         pkgs = nativePkgs;
         bootloaderFiles = cfg.bootloader.files;
         inherit imagePath scriptName;
-      };
-    };
-  in
-    flashScriptFor.${dispatchKey};
+      }
+    else
+      throw "Unknown flash method: ${method}. Supported methods: spinand, dd";
 
   flashScripts = builtins.mapAttrs mkFlashScript targets;
 
-  copyFlashScriptCmds = builtins.concatStringsSep "\n" (
-    builtins.attrValues (
-      builtins.mapAttrs (targetName: script: ''
+  copyFlashScriptCmds = flashScripts
+    |> builtins.mapAttrs (targetName: script: ''
         cp ${script} "$FLASH_DIR/flash-${targetName}.sh"
         chmod +x "$FLASH_DIR/flash-${targetName}.sh"
-      '') flashScripts
-    )
-  );
+      '')
+    |> builtins.attrValues
+    |> builtins.concatStringsSep "\n";
 
-  hasSpinand = builtins.elem "spinand" (builtins.attrNames targets);
+  hasSpinand = builtins.hasAttr "spinand" targets;
 
-  methodPackages = (if hasSpinand then [nativePkgs.upgrade-tool] else []) ++ cfg.flash.extraPackages
+  methodPackages = (if hasSpinand then [nativePkgs.upgrade-tool] else [])
+    ++ cfg.flash.extraPackages
     ++ [nativePkgs.usbutils nativePkgs.util-linux];
 in
   nativePkgs.mkShell {
@@ -98,7 +81,6 @@ in
       ${copyMiniloaderCmd}
       ${copyImageCmds}
       ${copyFlashScriptCmds}
-      ${copyUpgradeToolCmd}
 
       cleanup() {
         rm -rf "$FLASH_DIR"

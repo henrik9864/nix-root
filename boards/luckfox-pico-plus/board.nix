@@ -59,7 +59,7 @@ in rec {
     }
   ];
 
-  flash.method = "upgrade_tool";
+  flash.method = "spinand";
   flash.miniloader = pkgs.rkbin-miniloader.override {iniFile = "RV1106MINIALL";};
 
   kernel.version = "7.0-rc6";

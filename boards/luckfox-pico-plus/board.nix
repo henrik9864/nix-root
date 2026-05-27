@@ -62,16 +62,23 @@ in rec {
   flash.method = "spinand";
   flash.miniloader = pkgs.rkbin-miniloader.override {iniFile = "RV1106MINIALL";};
 
-  kernel.version = "7.0-rc6";
-  kernel.modDirVersion = "7.0.0-rc6";
+  kernel.version = "7.1-rc5";
+  kernel.modDirVersion = "7.1.0-rc5";
   kernel.imageFile = "zImage";
 
   kernel.git = {
     owner = "torvalds";
     repo = "linux";
-    rev = "v7.0-rc6";
-    hash = "sha256-hfBIYnBMpVVRo6hhcvHF2ZbjhSRDmaprJmarVQ1gqyA=";
+    rev = "v7.1-rc5";
+    hash = "sha256-V4OO9854uQv9n0jirUVPBGaw2le3Ti9mY9AXCsz4ogg=";
   };
+
+  kernel.patches = [
+    {
+      name = "rv1103-machine-compat";
+      patch = ./rv1103-machine-compat.patch;
+    }
+  ];
 
   kernel.structuredConfig = {
     # ARM / Rockchip platform
@@ -83,6 +90,14 @@ in rec {
     NEON = yes;
     AEABI = yes;
     HIGHMEM = yes;
+
+    DEBUG_LL = yes;
+    DEBUG_UART_8250 = yes;
+    DEBUG_UART_PHYS = freeform "0xff4c0000";
+    DEBUG_UART_VIRT = freeform "0xff4c0000";
+    DEBUG_UART_8250_SHIFT = freeform "2";
+    DEBUG_UART_8250_WORD = yes;
+    DEBUG_UNCOMPRESS = yes;
 
     # IRQ / timer / DT
     OF = yes;
@@ -106,6 +121,7 @@ in rec {
     ROCKCHIP_PM_DOMAINS = yes;
     ROCKCHIP_GRF = yes;
     ROCKCHIP_IODOMAIN = yes;
+    CLK_RV1106 = yes;
 
     # Console / printk
     TTY = yes;

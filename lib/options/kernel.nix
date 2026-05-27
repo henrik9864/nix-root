@@ -120,5 +120,25 @@ in {
       default = "Image";
       description = "Kernel image filename to copy into the boot partition. Use 'zImage' for compressed ARM kernels.";
     };
+
+    patches = mkOption {
+      type = types.listOf (types.submodule {
+        options = {
+          name = mkOption {
+            type = types.str;
+            description = "Name for the patch (used in build logs).";
+          };
+          patch = mkOption {
+            type = types.path;
+            description = "Path to the .patch file.";
+          };
+        };
+      });
+      default = [];
+      description = ''
+        List of kernel patches to apply, in the same format as
+        buildLinux.kernelPatches.
+      '';
+    };
   };
 }

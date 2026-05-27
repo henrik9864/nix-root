@@ -22,7 +22,7 @@ in {
 
     idblockSizeKiB = mkOption {
       type = types.int;
-      default = 2048; # 2 MiB
+     default = 2048; # 2 MiB
       description = "IDB/loader partition size in KiB.";
     };
 

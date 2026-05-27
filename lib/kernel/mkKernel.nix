@@ -25,6 +25,8 @@ in
     autoModules = cfg.kernel.autoModules;
     preferBuiltin = cfg.kernel.preferBuiltin;
 
+    kernelPatches = cfg.kernel.patches;
+
     structuredExtraConfig = mergedConfig;
 
     extraMeta = {

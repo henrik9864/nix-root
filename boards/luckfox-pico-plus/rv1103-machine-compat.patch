@@ -1,0 +1,10 @@
+--- a/arch/arm/mach-rockchip/rockchip.c
++++ b/arch/arm/mach-rockchip/rockchip.c
+@@ -59,6 +59,8 @@ static const char * const rockchip_board_dt_compat[] = {
+ 	"rockchip,rk3228",
+ 	"rockchip,rk3288",
+ 	"rockchip,rv1108",
++	"rockchip,rv1103",
++	"rockchip,rv1106",
+ 	NULL,
+ };

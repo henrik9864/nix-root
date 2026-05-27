@@ -60,6 +60,7 @@ in
       ubootTools
       mtdutils
       dtc
+      cpio
     ];
 
     buildCommand = ''
@@ -67,19 +68,29 @@ in
 
       cp ${bootloader}/uboot.img $out/uboot.img
       cp ${kernel}/zImage        $out/kernel.img
-
-      cp ${dtbFile} $out/devicetree.dtb
-
       ${
         if dtsFile != null
         then "cp ${dtsFile} $out/devicetree.dts"
         else ""
       }
-
       cp ${parameterFile} $out/parameter.txt
 
-      # Optional: keep original DTB build output directory available by copying contents
-      #cp -r ${dtbOutput} $out/dtb-output
+      # Fix DTB
+      cp ${dtbFile} $TMPDIR/devicetree.dtb
+      chmod +w $TMPDIR/devicetree.dtb
+      fdtput -r $TMPDIR/devicetree.dtb /psci
+			fdtput -t s $TMPDIR/devicetree.dtb /chosen bootargs \
+        "earlycon=uart8250,mmio32,0xff4c0000 console=ttyS2,1500000 rw init=/init"
+      cp $TMPDIR/devicetree.dtb $out/devicetree.dtb
+
+      # Pack rootfs as initramfs
+      cd ${rootfs}
+      find . | cpio -H newc -o > $TMPDIR/initrd.cpio
+      cd -
+      mkimage -A arm -O linux -T ramdisk -C none \
+        -a 0x00000000 -e 0x00000000 \
+        -n "initramfs" \
+        -d $TMPDIR/initrd.cpio $out/initrd.img
 
       source ${ubiImageScript}
       source ${ubootEnvScript}

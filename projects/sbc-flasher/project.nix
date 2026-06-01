@@ -13,7 +13,10 @@
     gateway = "192.168.10.1";
   };
 
-  environment.systemPackages = [pkgs.curl];
+  environment.systemPackages = [
+    # pkgs.pkgsStatic.curl
+    (pkgs.pkgsStatic.htop.override { sensorsSupport = false; })
+  ];
 
   devShell.serialDevices = {
     "debug-uart" = {

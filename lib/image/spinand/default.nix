@@ -85,7 +85,8 @@ in
         "${bootArgs}"
       cp $TMPDIR/devicetree.dtb $out/devicetree.dtb
 
-      # Pack rootfs as uncompressed initramfs
+      # Uncompressed cpio — vendor U-Boot auto-decompresses any gzip magic
+      # it detects, so the data must be raw cpio (starts with 070701).
       cd ${rootfs}
       find . | cpio -H newc -o > $TMPDIR/initrd.cpio
       cd -

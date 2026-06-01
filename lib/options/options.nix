@@ -8,6 +8,14 @@
 
   inherit (lib) mkOption types;
 
+  assertionsModule = {config, lib, ...}: {
+    options.assertions = lib.mkOption {
+      type = lib.types.listOf lib.types.unspecified;
+      default = [];
+      internal = true;
+    };
+  };
+
   internalModule = {config, ...}: let
     cfg = config;
 
@@ -50,6 +58,7 @@
   evaluated = lib.evalModules {
     modules =
       [
+        assertionsModule
         ./board.nix
         ./bootloader.nix
         ./kernel.nix
@@ -66,7 +75,15 @@
 
     specialArgs = extraArgs;
   };
+  failedAssertions = builtins.filter (a: !a.assertion) evaluated.config.assertions;
+  checkedConfig =
+    if failedAssertions == []
+    then evaluated.config
+    else throw (
+      "Failed assertions:\n"
+      + builtins.concatStringsSep "\n" (map (a: "  - ${a.message}") failedAssertions)
+    );
 in {
-  config = evaluated.config;
+  config = checkedConfig;
   options = evaluated.options;
 }

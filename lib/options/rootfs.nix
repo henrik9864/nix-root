@@ -1,4 +1,4 @@
-{lib, ...}: let
+{lib, config, ...}: let
   inherit (lib) mkOption mkEnableOption types;
 
   fileOpts = types.submodule {
@@ -174,4 +174,9 @@ in {
       };
     };
   };
+
+  config.assertions = map (pkg: {
+    assertion = pkg.stdenv.hostPlatform.isStatic;
+    message = "environment.systemPackages: '${pkg.name}' is dynamically linked. Use pkgs.pkgsStatic.<name> instead.";
+  }) config.environment.systemPackages;
 }

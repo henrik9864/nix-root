@@ -1,5 +1,5 @@
-# SD card image: MBR disk image with FAT32 boot (extlinux) + ext4 rootfs.
-# Bootloader is written at sector 64 (SD card layout).
+# MBR disk image with FAT32 boot (extlinux) + ext4 rootfs.
+# Used for both SD and eMMC targets; differences come through cfg.output.
 {
   pkgs,
   cfg,

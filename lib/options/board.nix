@@ -93,5 +93,14 @@ in {
       default = "x86_64-linux";
       description = "Nix build (native) system.";
     };
+
+    dtbPatches = mkOption {
+      type = types.lines;
+      default = "";
+      description = ''
+        Shell commands to patch the DTB before packaging.
+        The DTB file path is available as $DTB_PATH.
+      '';
+    };
   };
 }

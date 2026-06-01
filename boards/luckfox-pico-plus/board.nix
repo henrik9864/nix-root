@@ -200,6 +200,16 @@ in rec {
   image.bootPadding = 8;
   image.rootfsPadding = 16;
 
+  board.dtbPatches = ''
+    fdtput -r $DTB_PATH /psci
+    fdtput -t s $DTB_PATH /serial@ff4c0000 status okay
+    fdtput -d $DTB_PATH /serial@ff4c0000 clocks
+    fdtput -d $DTB_PATH /serial@ff4c0000 clock-names
+    fdtput -d $DTB_PATH /serial@ff4c0000 pinctrl-0
+    fdtput -d $DTB_PATH /serial@ff4c0000 pinctrl-names
+    fdtput -d $DTB_PATH /serial@ff4c0000 dmas
+  '';
+
   serial.console = "ttyS2,115200";
 
   output.targets = ["sd" "spinand"];

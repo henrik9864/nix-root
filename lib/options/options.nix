@@ -68,7 +68,6 @@
         ./output.nix
         ./devshell.nix
         ./flash.nix
-        ./spinand.nix
         internalModule
       ]
       ++ modules;

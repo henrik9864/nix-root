@@ -9,15 +9,15 @@
   networking.nameservers = ["1.1.1.1" "8.8.8.8"];
 
   networking.interfaces.eth0 = {
-    address = "192.168.1.100/24";
-    gateway = "192.168.1.1";
+    address = "192.168.10.100/24";
+    gateway = "192.168.10.1";
   };
 
   environment.systemPackages = [pkgs.curl];
 
   devShell.serialDevices = {
     "debug-uart" = {
-      baud = 1500000;
+      baud = 115200;
       symlink = "/dev/ttyS2";
       echo = true;
     };

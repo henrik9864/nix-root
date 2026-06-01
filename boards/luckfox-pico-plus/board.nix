@@ -91,13 +91,7 @@ in rec {
     AEABI = yes;
     HIGHMEM = yes;
 
-    DEBUG_LL = yes;
-    DEBUG_UART_8250 = yes;
-    DEBUG_UART_PHYS = freeform "0xff4c0000";
-    DEBUG_UART_VIRT = freeform "0xff4c0000";
-    DEBUG_UART_8250_SHIFT = freeform "2";
-    DEBUG_UART_8250_WORD = yes;
-    DEBUG_UNCOMPRESS = yes;
+		RD_GZIP = yes;
 
     # IRQ / timer / DT
     OF = yes;
@@ -206,7 +200,7 @@ in rec {
   image.bootPadding = 8;
   image.rootfsPadding = 16;
 
-  serial.console = "ttyS2,1500000";
+  serial.console = "ttyS2,115200";
 
   output.targets = ["sd" "spinand"];
 }

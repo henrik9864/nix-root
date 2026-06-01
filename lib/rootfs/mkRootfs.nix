@@ -94,13 +94,32 @@
     #!/bin/sh
     mount -t proc  none /proc
     mount -t sysfs none /sys
-    mount -t devtmpfs none /dev 2>/dev/null || mdev -s
+    mount -t devtmpfs devtmpfs /dev 2>/dev/null
 
+    echo "INIT: post-devtmpfs" > /dev/kmsg 2>/dev/null
+
+    if [ ! -c /dev/console ]; then
+      echo "INIT: no console, using tmpfs" > /dev/kmsg 2>/dev/null
+      mount -t tmpfs tmpfs /dev
+      mknod /dev/console c 5 1
+      mknod /dev/null    c 1 3
+      mknod /dev/kmsg    c 1 11
+      mknod /dev/ttyS2   c 4 66
+    fi
+
+    echo "INIT: console exists? $([ -c /dev/console ] && echo yes || echo no)" > /dev/kmsg 2>/dev/null
+    echo "INIT: before exec redirect" > /dev/kmsg 2>/dev/null
+
+    exec </dev/console >/dev/console 2>&1
+
+    echo "INIT: after redirect, reached Boot OK" > /dev/kmsg 2>/dev/null
+    echo ":: Boot OK ::"
     hostname ${cfg.networking.hostName}
     ${networkScript}
 
-    echo ":: Boot OK ::"
-    exec /bin/sh
+    while true; do
+      setsid cttyhack /bin/sh </dev/console >/dev/console 2>&1 || /bin/sh </dev/console >/dev/console 2>&1
+    done
   '';
 in
   nativePkgs.stdenv.mkDerivation {
@@ -110,13 +129,16 @@ in
           # ── Directory layout ───────────────────────────────
           mkdir -p $out/{bin,sbin,etc,proc,sys,dev,tmp,mnt,root}
 
-          # ── Busybox ────────────────────────────────────────
+          # ── Busybox applet symlinks (skip busybox itself) ──
+          for applet in ${nativePkgs.busybox}/bin/*; do
+            name=$(basename "$applet")
+            [ "$name" = "busybox" ] && continue
+            ln -sf /bin/busybox $out/bin/$name
+          done
+
+          # ── Real busybox binary (copied last, never overwritten) ──
           cp ${busybox}/bin/busybox $out/bin/busybox
           chmod +x $out/bin/busybox
-
-          for applet in ${nativePkgs.busybox}/bin/*; do
-            ln -sf /bin/busybox $out/bin/$(basename "$applet")
-          done
 
           # ── Extra packages ─────────────────────────────────
           ${extraPkgCommands}

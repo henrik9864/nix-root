@@ -10,10 +10,10 @@ let
   toHex = n: "0x${lib.toHexString n}";
 
   flashParts = builtins.filter (p: p.flashFile != null) partitions;
-  total = builtins.length flashParts + 2; # miniloader + parameter.txt
+  total = builtins.length flashParts + 3; # miniloader + idblock + parameter.txt
 
   writeCmds = lib.imap1 (i: p: ''
-    echo "[${toString (i + 2)}/${toString total}] Writing ${p.name} at sector ${toHex (mibToSectors p.offsetMiB)}..."
+    echo "[${toString (i + 3)}/${toString total}] Writing ${p.name} at sector ${toHex (mibToSectors p.offsetMiB)}..."
     _f="$SCRIPT_DIR/${p.flashFile}"
     _sectors=$(( ($(stat -c %s "$_f") + 511) / 512 ))
     upgrade_tool wl ${toHex (mibToSectors p.offsetMiB)} $_sectors "$_f"'') flashParts;
@@ -28,6 +28,9 @@ in
 
     echo "[2/${toString total}] Writing parameter.txt at sector 0x0..."
     upgrade_tool wl 0x0 "$SCRIPT_DIR/images/parameter.txt"
+
+    echo "[3/${toString total}] Writing loader (idblock) at sector 0x100..."
+    upgrade_tool wl 0x100 "$SCRIPT_DIR/firmware/idblock.img"
 
     ${builtins.concatStringsSep "\n\n" writeCmds}
 

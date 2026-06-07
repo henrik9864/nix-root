@@ -14,6 +14,7 @@
   which,
   buildPackages,
   defconfig ? "luckfox_rv1106_uboot",
+  bootcmd ? null,
   configOverrides ? {CONFIG_SPL_FIT_HW_CRYPTO = false;},
 }: let
   kcflags = "-Wno-error=enum-int-mismatch -Wno-error=address -Wno-error=maybe-uninitialized";
@@ -70,7 +71,12 @@ in
       patchShebangs .
 
       sed -i '/\t\t\tsignature {/,/\t\t\t};/d' arch/arm/mach-rockchip/fit_nodes.sh
-    '';
+    '' + lib.optionalString (bootcmd != null) (
+      let bootcmdSed = builtins.replaceStrings ["&"] ["\\&"] bootcmd;
+      in ''
+
+      sed -i 's|^#define CONFIG_BOOTCOMMAND.*|#define CONFIG_BOOTCOMMAND "${bootcmdSed}"|' include/configs/*.h
+    '');
 
     configurePhase = ''
       runHook preConfigure

@@ -20,6 +20,7 @@ in rec {
 
   bootloader.package = pkgs.uboot-luckfox-pico.override {
     defconfig = "luckfox_rv1106_uboot";
+    bootcmd = "mtd read spi-nand0 0x01000000 0x1000000 0xE00000 && mtd read spi-nand0 0x03F00000 0x2000000 0x80000 && mtd read spi-nand0 0x03800000 0x2200000 0x700000 && bootz 0x01000000 0x03800000 0x03F00000";
     configOverrides = {
       CONFIG_DEBUG = true;
       CONFIG_SPL_DEBUG = true;

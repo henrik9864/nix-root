@@ -4,6 +4,29 @@
   ...
 }: let
   inherit (lib) mkOption types;
+
+  partitionOpts = types.submodule {
+    options = {
+      name = mkOption {
+        type = types.str;
+        description = "Partition name (used in parameter.txt CMDLINE and flash step labels).";
+      };
+      sizeMiB = mkOption {
+        type = types.nullOr types.int;
+        default = null;
+        description = "Partition size in MiB. null fills the remaining flash space.";
+      };
+      offsetMiB = mkOption {
+        type = types.int;
+        description = "Partition start offset from flash start, in MiB.";
+      };
+      flashFile = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Path relative to FLASH_DIR of the file to write to this partition. null skips writing.";
+      };
+    };
+  };
 in {
   options.flash = {
     method = mkOption {
@@ -25,6 +48,16 @@ in {
       type = types.listOf types.package;
       default = [];
       description = "Extra packages to include in the flash devshell.";
+    };
+
+    spinandPartitions = mkOption {
+      type = types.listOf partitionOpts;
+      default = [];
+      description = ''
+        MTD partition layout for SPI NAND flash.
+        Drives both parameter.txt generation and the per-partition upgrade_tool write commands.
+        Sector offsets (512-byte units) are derived from offsetMiB at evaluation time.
+      '';
     };
   };
 }

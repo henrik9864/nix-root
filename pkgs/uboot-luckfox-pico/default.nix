@@ -107,7 +107,3 @@ in
       platforms = platforms.linux;
     };
   })
-
-# TODO Document making pkg shell 
-# TODO investigate and document ways to enter pkg shell with paramenters
-# TODO also investigate and docment ways to bring custom packages into flash writeShellScript

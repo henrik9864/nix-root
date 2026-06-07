@@ -5,6 +5,10 @@
 }: let
   lib = nativePkgs.lib;
 
+  consoleTty = builtins.head (lib.splitString "," cfg.serial.console);
+  ttySNum = lib.toInt (lib.removePrefix "ttyS" consoleTty);
+  consoleMinor = 64 + ttySNum;
+
   busybox = pkgs.busybox.override {
     enableStatic = true;
   };
@@ -104,7 +108,7 @@
       mknod /dev/console c 5 1
       mknod /dev/null    c 1 3
       mknod /dev/kmsg    c 1 11
-      mknod /dev/ttyS2   c 4 66
+      mknod /dev/${consoleTty}   c 4 ${toString consoleMinor}
     fi
 
     echo "INIT: console exists? $([ -c /dev/console ] && echo yes || echo no)" > /dev/kmsg 2>/dev/null

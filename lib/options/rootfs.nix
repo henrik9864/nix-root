@@ -146,20 +146,6 @@ in {
       description = "Packages to install into the rootfs.";
     };
 
-    boot.initScript = mkOption {
-      type = types.lines;
-      default = ''
-        #!/bin/sh
-        mount -t proc  none /proc
-        mount -t sysfs none /sys
-        mount -t devtmpfs none /dev 2>/dev/null || mdev -s
-
-        echo ":: Boot OK ::"
-        exec /bin/sh
-      '';
-      description = "Contents of /init in the rootfs.";
-    };
-
     rootfs = {
       overlay = mkOption {
         type = types.nullOr types.path;

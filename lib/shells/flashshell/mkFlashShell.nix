@@ -6,14 +6,13 @@
   bootloader = cfg.bootloader.package;
   method = cfg.flash.method;
   miniloader = cfg.flash.miniloader;
-  kernel = anyTarget.kernel;
   copyBootloaderCmds = cfg.bootloader.files
     |> map (f: ''
       cp ${bootloader}/${f.file} "$FLASH_DIR/firmware/${f.file}"
     '')
     |> builtins.concatStringsSep "\n";
   copyMiniloaderCmd = lib.optionalString (miniloader != null) ''
-    cp ${miniloader}/*.bin "$FLASH_DIR/firmware/"
+    cp ${miniloader}/miniloader.bin "$FLASH_DIR/firmware/miniloader.bin"
   '';
   copyImageCmds = targets
     |> builtins.mapAttrs (_: project: ''
@@ -22,35 +21,19 @@
     |> builtins.attrValues
     |> builtins.concatStringsSep "\n";
 
-  # Copy kernel debug artifacts
-  copyDebugCmds = ''
-    echo "Copying kernel debug artifacts..."
-    if [ -f "${kernel}/vmlinux" ]; then
-      cp "${kernel}/vmlinux" "$FLASH_DIR/debug/vmlinux" 2>/dev/null || true
-    fi
-    find ${kernel} -name "vmlinux" -exec cp {} "$FLASH_DIR/debug/" \; 2>/dev/null || true
-    find ${kernel} -name ".config" -exec cp {} "$FLASH_DIR/debug/kernel.config" \; 2>/dev/null || true
-    find ${kernel} -name "System.map" -exec cp {} "$FLASH_DIR/debug/" \; 2>/dev/null || true
-    find ${kernel} -name "Module.symvers" -exec cp {} "$FLASH_DIR/debug/" \; 2>/dev/null || true
-    # Also list everything in the kernel output for inspection
-    ls -la ${kernel} > "$FLASH_DIR/debug/kernel-output-listing.txt" 2>/dev/null || true
-    find ${kernel} -maxdepth 3 -type f > "$FLASH_DIR/debug/kernel-files.txt" 2>/dev/null || true
-  '';
-
-  miniloaderBin =
-    if miniloader != null
-    then "${miniloader}" |> builtins.readDir |> builtins.attrNames |> builtins.head
-    else "miniloader.bin";
   mkFlashScript = targetName: project: let
     scriptName = "flash-${targetName}.sh";
-    imageName = "${project.image}" |> builtins.readDir |> builtins.attrNames |> builtins.head;
-    imagePath = "images/${imageName}";
+    # Derive disk image name from config — avoids import-from-derivation
+    diskImageName = "${project.cfg.board.name}${project.cfg.output.imageSuffix}.img";
+    imagePath = "images/${diskImageName}";
     method = if targetName == "spinand" then "spinand" else cfg.flash.method;
   in
     if method == "spinand" then
       import ./scripts/flashSpinand.nix {
         pkgs = nativePkgs;
-        inherit miniloaderBin scriptName;
+        inherit lib scriptName;
+        partitions = cfg.flash.spinandPartitions;
+        miniloaderBin = "miniloader.bin";
       }
     else if method == "dd" then
       import ./scripts/flashDd.nix {
@@ -79,12 +62,11 @@ in
     shellHook = ''
       FLASH_DIR=$(mktemp -d "/tmp/${cfg.board.name}-flash-XXXXXX")
       export FLASH_DIR
-      mkdir -p "$FLASH_DIR/images" "$FLASH_DIR/firmware" "$FLASH_DIR/debug"
+      mkdir -p "$FLASH_DIR/images" "$FLASH_DIR/firmware"
       ${copyBootloaderCmds}
       ${copyMiniloaderCmd}
       ${copyImageCmds}
       ${copyFlashScriptCmds}
-      ${copyDebugCmds}
       cleanup() {
         rm -rf "$FLASH_DIR"
         echo "Cleaned up flash dir: $FLASH_DIR"
@@ -101,9 +83,6 @@ in
       for s in "$FLASH_DIR"/flash-*.sh; do
         echo "  sudo $(basename $s)"
       done
-      echo ""
-      echo "Debug artifacts:"
-      ls "$FLASH_DIR/debug/" 2>/dev/null
       echo ""
       cd "$FLASH_DIR"
     '';

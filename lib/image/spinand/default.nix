@@ -12,14 +12,10 @@
   bootArgs =
     "keep_bootcon ignore_loglevel clk_ignore_unused"
     + " earlycon=uart8250,mmio32,0xff4c0000,115200"
-    + " console=ttyS2,115200n8"
+    + " console=${cfg.serial.console}n8"
     + " rdinit=/init";
 
-  parameterFile = import ./parameter.nix {
-    inherit pkgs;
-    mtdParts = "";
-    boardName = cfg.board.name;
-  };
+  parameterFile = import ./parameter.nix {inherit pkgs cfg;};
 in
   pkgs.stdenv.mkDerivation {
     name = "${cfg.board.name}-spinand-image";

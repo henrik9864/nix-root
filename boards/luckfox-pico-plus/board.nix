@@ -19,7 +19,6 @@ in rec {
   };
 
   bootloader.package = pkgs.uboot-luckfox-pico.override {
-    #defconfig = "luckfox_rv1106_spi_nand_tb";
     defconfig = "luckfox_rv1106_uboot";
     configOverrides = {
       CONFIG_DEBUG = true;
@@ -35,16 +34,6 @@ in rec {
       CONFIG_SPL_SPI_NAND_SUPPORT = true;
 
       CONFIG_SPL_ROCKCHIP_BACK_TO_BROM = true;
-      #CONFIG_SPL_SPI_LOAD = true;
-
-      #CONFIG_SPL_MAX_SIZE = "0x10000";
-
-      #CONFIG_SPL_LZMA = false;
-      #CONFIG_SPL_ZLIB = false;
-      #CONFIG_SPL_GZIP = false;
-
-      #CONFIG_SPL_SPI_NAND_MTD = true;
-      #CONFIG_SPL_MTD_SPINAND = true;
       CONFIG_SPL_SPI_NAND_WINBOND = true;
     };
   };
@@ -61,6 +50,14 @@ in rec {
 
   flash.method = "spinand";
   flash.miniloader = pkgs.rkbin-miniloader.override {iniFile = "RV1106MINIALL";};
+
+  flash.spinandPartitions = [
+    {name = "env";    sizeMiB = 8;    offsetMiB = 0;  flashFile = null;}
+    {name = "uboot";  sizeMiB = 4;    offsetMiB = 8;  flashFile = "firmware/uboot.img";}
+    {name = "kernel"; sizeMiB = 16;   offsetMiB = 16; flashFile = "images/kernel.img";}
+    {name = "dtb";    sizeMiB = 2;    offsetMiB = 32; flashFile = "images/devicetree.dtb";}
+    {name = "rootfs"; sizeMiB = null; offsetMiB = 34; flashFile = "images/initrd.img";}
+  ];
 
   kernel.version = "7.1-rc5";
   kernel.modDirVersion = "7.1.0-rc5";
@@ -90,8 +87,7 @@ in rec {
     NEON = yes;
     AEABI = yes;
     HIGHMEM = yes;
-
-		RD_GZIP = yes;
+    RD_GZIP = yes;
 
     # IRQ / timer / DT
     OF = yes;
@@ -189,7 +185,7 @@ in rec {
     LZO_COMPRESS = yes;
     LZO_DECOMPRESS = yes;
 
-    # Optional JFFS2
+    # JFFS2
     JFFS2_FS = yes;
     JFFS2_FS_WRITEBUFFER = yes;
     JFFS2_ZLIB = yes;

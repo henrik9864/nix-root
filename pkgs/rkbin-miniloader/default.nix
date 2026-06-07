@@ -30,7 +30,7 @@ stdenvNoCC.mkDerivation {
 
     mkdir -p $out
     outFile=$(grep -i '^PATH=' "RKBOOT/${iniFile}.ini" | cut -d= -f2 | tr -d '[:space:]')
-    cp "$outFile" $out/
+    cp "$outFile" $out/miniloader.bin
   '';
 
   meta = with lib; {

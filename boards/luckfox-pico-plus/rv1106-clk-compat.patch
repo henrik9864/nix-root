@@ -1,0 +1,38 @@
+--- a/drivers/clk/rockchip/clk-rv1103b.c
++++ b/drivers/clk/rockchip/clk-rv1103b.c
+@@ -658,1 +658,35 @@ static void __init rv1103b_clk_init(struct device_node *np)
+ CLK_OF_DECLARE(rv1103b_cru, "rockchip,rv1103b-cru", rv1103b_clk_init);
++
++/*
++ * Stub clock provider for RV1106. U-Boot already configured all clocks;
++ * reprogramming the CRU with rv1103b register offsets corrupts the UART
++ * clock and hangs the CPU. Instead, register dummy fixed-rate clocks so
++ * peripheral drivers can probe without touching CRU registers.
++ */
++#define RV1106_MAX_CLKS 256
++
++static struct clk_hw *rv1106_clks[RV1106_MAX_CLKS];
++
++static struct clk_hw *rv1106_cru_hw_get(struct of_phandle_args *clkspec,
++					void *data)
++{
++	unsigned int id = clkspec->args[0];
++	char name[32];
++
++	if (id >= RV1106_MAX_CLKS)
++		return ERR_PTR(-EINVAL);
++
++	if (!rv1106_clks[id]) {
++		snprintf(name, sizeof(name), "rv1106-clk%u", id);
++		rv1106_clks[id] = clk_hw_register_fixed_rate(NULL, name, NULL,
++							     0, 100000000);
++	}
++	return rv1106_clks[id];
++}
++
++static void __init rv1106_cru_init(struct device_node *np)
++{
++	of_clk_add_hw_provider(np, rv1106_cru_hw_get, NULL);
++}
++
++CLK_OF_DECLARE(rv1106_cru, "rockchip,rv1106-cru", rv1106_cru_init);

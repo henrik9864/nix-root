@@ -1,0 +1,11 @@
+--- a/drivers/pinctrl/pinctrl-rockchip.c
++++ b/drivers/pinctrl/pinctrl-rockchip.c
+@@ -5259,6 +5259,8 @@ static const struct of_device_id rockchip_pinctrl_dt_match[] = {
+ 	{ .compatible = "rockchip,px30-pinctrl",
+ 		.data = &px30_pin_ctrl },
+ 	{ .compatible = "rockchip,rv1103b-pinctrl",
+ 		.data = &rv1103b_pin_ctrl },
++	{ .compatible = "rockchip,rv1106-pinctrl",
++		.data = &rv1103b_pin_ctrl },
+ 	{ .compatible = "rockchip,rv1108-pinctrl",
+ 		.data = &rv1108_pin_ctrl },

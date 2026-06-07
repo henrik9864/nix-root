@@ -14,7 +14,9 @@ let
 
   writeCmds = lib.imap1 (i: p: ''
     echo "[${toString (i + 2)}/${toString total}] Writing ${p.name} at sector ${toHex (mibToSectors p.offsetMiB)}..."
-    upgrade_tool wl ${toHex (mibToSectors p.offsetMiB)} "$SCRIPT_DIR/${p.flashFile}"'') flashParts;
+    _f="$SCRIPT_DIR/${p.flashFile}"
+    _sectors=$(( ($(stat -c %s "$_f") + 511) / 512 ))
+    upgrade_tool wl ${toHex (mibToSectors p.offsetMiB)} $_sectors "$_f"'') flashParts;
 in
   pkgs.writeShellScript scriptName ''
     #!/usr/bin/env bash

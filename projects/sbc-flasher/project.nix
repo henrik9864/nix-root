@@ -14,7 +14,7 @@
   };
 
   environment.systemPackages = [
-    # pkgs.pkgsStatic.curl
+    pkgs.pkgsStatic.curl
     (pkgs.pkgsStatic.htop.override { sensorsSupport = false; })
   ];
 

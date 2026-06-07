@@ -59,5 +59,26 @@ in {
         Sector offsets (512-byte units) are derived from offsetMiB at evaluation time.
       '';
     };
+
+    nand = {
+      pageSize = mkOption {
+        type = types.int;
+        default = 2048;
+        description = "NAND page size in bytes.";
+      };
+      blockSize = mkOption {
+        type = types.int;
+        default = 131072;
+        description = "NAND erase block size in bytes (128 KiB for most SPI NAND chips).";
+      };
+      totalSizeMiB = mkOption {
+        type = types.int;
+        description = "Total NAND flash capacity in MiB (used to size the last fill partition).";
+      };
+      dtFlashPath = mkOption {
+        type = types.str;
+        description = "Device tree node path of the SPI flash device (e.g. /spi@ffac0000/flash@0).";
+      };
+    };
   };
 }

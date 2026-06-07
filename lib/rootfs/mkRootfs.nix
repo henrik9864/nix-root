@@ -96,8 +96,9 @@
   # ── Init script with networking ───────────────────
   initScript = ''
     #!/bin/sh
-    mount -t proc  none /proc
-    mount -t sysfs none /sys
+    mount -t proc     none /proc
+    mount -t sysfs    none /sys
+    mount -t tmpfs    none /tmp
     mount -t devtmpfs devtmpfs /dev 2>/dev/null
 
     echo "INIT: post-devtmpfs" > /dev/kmsg 2>/dev/null
@@ -131,7 +132,7 @@ in
 
     buildCommand = ''
           # ── Directory layout ───────────────────────────────
-          mkdir -p $out/{bin,sbin,etc,proc,sys,dev,tmp,mnt,root}
+          mkdir -p $out/{bin,sbin,etc,proc,sys,dev,tmp,run,mnt,root}
 
           # ── Busybox applet symlinks (skip busybox itself) ──
           for applet in ${nativePkgs.busybox}/bin/*; do

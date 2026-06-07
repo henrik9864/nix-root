@@ -20,7 +20,7 @@ in rec {
 
   bootloader.package = pkgs.uboot-luckfox-pico.override {
     defconfig = "luckfox_rv1106_uboot";
-    bootcmd = "mtd read spi-nand0 0x01000000 0x1000000 0xE00000 && mtd read spi-nand0 0x03F00000 0x2000000 0x80000 && mtd read spi-nand0 0x03800000 0x2200000 0x700000 && bootz 0x01000000 0x03800000 0x03F00000";
+    bootcmd = "mtd read spi-nand0 0x01000000 0x1000000 0xE00000 && mtd read spi-nand0 0x03F00000 0x2000000 0x80000 && bootz 0x01000000 - 0x03F00000";
     configOverrides = {
       CONFIG_DEBUG = true;
       CONFIG_SPL_DEBUG = true;
@@ -51,13 +51,15 @@ in rec {
 
   flash.method = "spinand";
   flash.miniloader = pkgs.rkbin-miniloader.override {iniFile = "RV1106MINIALL";};
+  flash.nand.totalSizeMiB = 128;
+  flash.nand.dtFlashPath = "/spi@ffac0000/flash@0";
 
   flash.spinandPartitions = [
     {name = "env";    sizeMiB = 8;    offsetMiB = 0;  flashFile = null;}
     {name = "uboot";  sizeMiB = 4;    offsetMiB = 8;  flashFile = "firmware/uboot.img";}
     {name = "kernel"; sizeMiB = 16;   offsetMiB = 16; flashFile = "images/kernel.img";}
     {name = "dtb";    sizeMiB = 2;    offsetMiB = 32; flashFile = "images/devicetree.dtb";}
-    {name = "rootfs"; sizeMiB = null; offsetMiB = 34; flashFile = "images/initrd.img";}
+    {name = "rootfs"; sizeMiB = null; offsetMiB = 34; flashFile = "images/rootfs.ubi";}
   ];
 
   kernel.version = "7.1-rc5";
@@ -75,6 +77,14 @@ in rec {
     {
       name = "rv1103-machine-compat";
       patch = ./rv1103-machine-compat.patch;
+    }
+    {
+      name = "rv1106-clk-compat";
+      patch = ./rv1106-clk-compat.patch;
+    }
+    {
+      name = "rv1106-pinctrl-compat";
+      patch = ./rv1106-pinctrl-compat.patch;
     }
   ];
 
@@ -112,7 +122,7 @@ in rec {
     ROCKCHIP_PM_DOMAINS = yes;
     ROCKCHIP_GRF = yes;
     ROCKCHIP_IODOMAIN = yes;
-    CLK_RV1106 = yes;
+    CLK_RV1103B = yes;
 
     # Console / printk
     TTY = yes;
@@ -160,6 +170,7 @@ in rec {
     SPI_MASTER = yes;
     SPI_MEM = yes;
     SPI_ROCKCHIP = yes;
+    SPI_ROCKCHIP_SFC = yes;
 
     MTD = yes;
     MTD_BLOCK = yes;

@@ -10,10 +10,10 @@ let
   toHex = n: "0x${lib.toHexString n}";
 
   flashParts = builtins.filter (p: p.flashFile != null) partitions;
-  total = builtins.length flashParts + 3; # miniloader + idblock + parameter.txt
+  total = builtins.length flashParts + 4; # erase + miniloader + parameter.txt + idblock
 
   writeCmds = lib.imap1 (i: p: ''
-    echo "[${toString (i + 3)}/${toString total}] Writing ${p.name} at sector ${toHex (mibToSectors p.offsetMiB)}..."
+    echo "[${toString (i + 4)}/${toString total}] Writing ${p.name} at sector ${toHex (mibToSectors p.offsetMiB)}..."
     _f="$SCRIPT_DIR/${p.flashFile}"
     _sectors=$(( ($(stat -c %s "$_f") + 511) / 512 ))
     upgrade_tool wl ${toHex (mibToSectors p.offsetMiB)} $_sectors "$_f"'') flashParts;
@@ -23,13 +23,20 @@ in
     set -euo pipefail
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-    echo "[1/${toString total}] Loading miniloader to RAM..."
+    echo "[1/${toString total}] Erasing flash..."
+    upgrade_tool ef "$SCRIPT_DIR/firmware/${miniloaderBin}"
+
+    sleep 2
+
+    echo "[2/${toString total}] Loading miniloader to RAM..."
     upgrade_tool db "$SCRIPT_DIR/firmware/${miniloaderBin}"
 
-    echo "[2/${toString total}] Writing parameter.txt at sector 0x0..."
+    sleep 1
+
+    echo "[3/${toString total}] Writing parameter.txt at sector 0x0..."
     upgrade_tool wl 0x0 "$SCRIPT_DIR/images/parameter.txt"
 
-    echo "[3/${toString total}] Writing loader (idblock) at sector 0x100..."
+    echo "[4/${toString total}] Writing loader (idblock) at sector 0x100..."
     upgrade_tool wl 0x100 "$SCRIPT_DIR/firmware/idblock.img"
 
     ${builtins.concatStringsSep "\n\n" writeCmds}

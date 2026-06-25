@@ -55,11 +55,36 @@ in rec {
   flash.nand.dtFlashPath = "/spi@ffac0000/flash@0";
 
   flash.spinandPartitions = [
-    {name = "env";    sizeMiB = 8;    offsetMiB = 0;  flashFile = null;}
-    {name = "uboot";  sizeMiB = 4;    offsetMiB = 8;  flashFile = "firmware/uboot.img";}
-    {name = "kernel"; sizeMiB = 16;   offsetMiB = 16; flashFile = "images/kernel.img";}
-    {name = "dtb";    sizeMiB = 2;    offsetMiB = 32; flashFile = "images/devicetree.dtb";}
-    {name = "rootfs"; sizeMiB = null; offsetMiB = 34; flashFile = "images/rootfs.ubi";}
+    {
+      name = "env";
+      sizeMiB = 8;
+      offsetMiB = 0;
+      flashFile = null;
+    }
+    {
+      name = "uboot";
+      sizeMiB = 4;
+      offsetMiB = 8;
+      flashFile = "firmware/uboot.img";
+    }
+    {
+      name = "kernel";
+      sizeMiB = 16;
+      offsetMiB = 16;
+      flashFile = "images/kernel.img";
+    }
+    {
+      name = "dtb";
+      sizeMiB = 2;
+      offsetMiB = 32;
+      flashFile = "images/devicetree.dtb";
+    }
+    {
+      name = "rootfs";
+      sizeMiB = null;
+      offsetMiB = 34;
+      flashFile = "images/rootfs.ubi";
+    }
   ];
 
   kernel.version = "7.1-rc5";

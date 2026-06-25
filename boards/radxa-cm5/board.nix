@@ -25,7 +25,6 @@
   ];
 
   kernel.version = "7.0-rc4";
-  kernel.modDirVersion = "7.0.0-rc4";
 
   kernel.git = {
     owner = "torvalds";

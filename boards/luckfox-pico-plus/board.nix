@@ -90,7 +90,6 @@
   ];
 
   kernel.version = "7.1-rc5";
-  kernel.modDirVersion = "7.1.0-rc5";
   kernel.imageFile = "zImage";
 
   kernel.git = {

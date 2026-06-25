@@ -4,7 +4,7 @@ in {
   options.bootloader = {
     package = mkOption {
       type = types.package;
-      description = "Bootloader package (e.g. pkgs.barebox or pkgs.ubootOrangePi5).";
+      description = "Bootloader package (e.g. pkgs.ubootOrangePi5).";
     };
 
     files = mkOption {

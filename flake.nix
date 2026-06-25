@@ -21,15 +21,13 @@
       else ./lib/image + "/${target}";
 
     mkProjectTargets = {module, targets}: let
-      projectModule = module;
-      targetsList = targets;
-      projectName = baseNameOf (builtins.dirOf projectModule);
+      projectName = baseNameOf (builtins.dirOf module);
 
       evalCfg = outputTarget:
         (import ./lib/options/options.nix {
           inherit nixpkgs overlays;
           extraArgs = {inherit boards;};
-          modules = [projectModule {output.target = outputTarget;}];
+          modules = [module {output.target = outputTarget;}];
         })
         .config;
 
@@ -57,7 +55,7 @@
           name = t;
           value = mkTarget t;
         })
-        targetsList);
+        targets);
     };
 
     projects = builtins.listToAttrs (map mkProjectTargets ((import ./projects/projects.nix) {inherit boards;}));

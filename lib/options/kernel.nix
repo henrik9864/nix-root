@@ -21,7 +21,15 @@ in {
 
     modDirVersion = mkOption {
       type = types.str;
-      description = "Module directory version (e.g. 7.0.0-rc4).";
+      default = let
+        ver = config.kernel.version;
+        dashParts = lib.splitString "-" ver;
+        numeric = builtins.head dashParts;
+        suffix = lib.drop 1 dashParts;
+        needsPatch = builtins.length (lib.splitString "." numeric) < 3;
+        patchedNumeric = if needsPatch then "${numeric}.0" else numeric;
+      in lib.concatStringsSep "-" ([patchedNumeric] ++ suffix);
+      description = "Module directory version (e.g. 7.0.0-rc4). Derived from kernel.version if not set.";
     };
 
     srcType = mkOption {

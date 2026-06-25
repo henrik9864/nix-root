@@ -113,6 +113,10 @@
       name = "rv1106-pinctrl-compat";
       patch = ./rv1106-pinctrl-compat.patch;
     }
+    {
+      name = "rv1106-gmac-compat";
+      patch = ./rv1106-gmac-compat.patch;
+    }
   ];
 
   kernel.structuredConfig = {
@@ -192,6 +196,16 @@
     MMC_SDHCI_PLTFM = yes;
     MMC_SDHCI_OF_DWCMSHC = yes;
 
+    # Ethernet (GMAC + integrated FePHY)
+    NETDEVICES = yes;
+    ETHERNET = yes;
+    NET_VENDOR_STMICRO = yes;
+    STMMAC_ETH = yes;
+    STMMAC_PLATFORM = yes;
+    DWMAC_ROCKCHIP = yes;
+    PHYLIB = yes;
+    MOTORCOMM_PHY = yes;
+
     # SPI / SPI NAND
     SPI = yes;
     SPI_MASTER = yes;
@@ -243,6 +257,10 @@
     fdtput -d $DTB_PATH /serial@ff4c0000 pinctrl-0
     fdtput -d $DTB_PATH /serial@ff4c0000 pinctrl-names
     fdtput -d $DTB_PATH /serial@ff4c0000 dmas
+    fdtput -d $DTB_PATH /ethernet@ffa80000 nvmem-cells
+    fdtput -d $DTB_PATH /ethernet@ffa80000 nvmem-cell-names
+    fdtput -d $DTB_PATH /ethernet@ffa80000/mdio/ethernet-phy@2 nvmem-cells
+    fdtput -d $DTB_PATH /ethernet@ffa80000/mdio/ethernet-phy@2 nvmem-cell-names
   '';
 
   serial.console = "ttyS2,115200";

@@ -14,9 +14,9 @@
 
   bootArgs =
     "keep_bootcon ignore_loglevel clk_ignore_unused"
-    + " earlycon=uart8250,mmio32,0xff4c0000,115200"
+    + lib.optionalString (cfg.serial.earlycon != null) " earlycon=${cfg.serial.earlycon}"
     + " console=${cfg.serial.console}n8"
-    + " ubi.mtd=rootfs root=ubi0:rootfs rootfstype=ubifs init=/init";
+    + " ubi.mtd=rootfs root=${cfg.output.rootDevice} rootfstype=${cfg.output.rootfsType} init=/init";
 
   mibToBytes = mib: mib * 1024 * 1024;
   toHex = n: "0x${lib.toHexString n}";

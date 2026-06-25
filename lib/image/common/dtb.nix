@@ -6,6 +6,11 @@
 }: let
   dtbSource = cfg.board.dtbSource;
 
+  srcType =
+    if dtbSource.localPath != null then "path"
+    else if dtbSource.git.rev != null then "git"
+    else "kernel";
+
   dtbName =
     if cfg.board.dts != null
     then builtins.replaceStrings [".dts"] [".dtb"] (baseNameOf cfg.board.dts)
@@ -17,7 +22,7 @@
     else builtins.replaceStrings [".dtb"] [".dts"] dtbName;
 
   fetchedGitSource =
-    if dtbSource.type == "git"
+    if srcType == "git"
     then
       pkgs.fetchFromGitHub ({
           inherit (dtbSource.git) owner repo rev hash;
@@ -30,9 +35,9 @@
     else null;
 
   sourceDir =
-    if dtbSource.type == "kernel"
+    if srcType == "kernel"
     then kernel
-    else if dtbSource.type == "git"
+    else if srcType == "git"
     then "${fetchedGitSource}/${dtbSource.git.path}"
     else dtbSource.localPath;
 
@@ -73,9 +78,9 @@
   dtbFile =
     if cfg.board.dts != null
     then "${compileDtb}/${dtbName}"
-    else if dtbSource.type == "kernel"
+    else if srcType == "kernel"
     then "${kernel}/dtbs/rockchip/${dtbName}"
-    else if dtbSource.type == "git"
+    else if srcType == "git"
     then "${sourceDir}/${dtbName}"
     else "${dtbSource.localPath}/${dtbName}";
 

@@ -15,9 +15,9 @@
       rootfsType = "ext4";
     };
     spinand = {
-      rootDevice = "/dev/mtdblock4";
+      rootDevice = "ubi0:rootfs";
       imageSuffix = "-spinand";
-      rootfsType = "jffs2";
+      rootfsType = "ubifs";
     };
   };
 

@@ -9,7 +9,7 @@
   cfg = config.kernel;
 
   detectedSrcType =
-    if cfg.git.rev != ""
+    if cfg.git.rev != null
     then "git"
     else "tarball";
 in {
@@ -47,8 +47,8 @@ in {
       };
 
       rev = mkOption {
-        type = types.str;
-        default = "";
+        type = types.nullOr types.str;
+        default = null;
         description = "Git revision (tag, branch, or commit hash).";
       };
 

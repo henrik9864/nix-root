@@ -246,5 +246,6 @@
   '';
 
   serial.console = "ttyS2,115200";
+  serial.earlycon = "uart8250,mmio32,0xff4c0000,115200";
   };
 }

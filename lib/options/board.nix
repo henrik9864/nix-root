@@ -5,13 +5,6 @@
 }: let
   inherit (lib) mkOption types;
   cfg = config.board;
-
-  detectedDtbSourceType =
-    if cfg.dtbSource.localPath != null
-    then "path"
-    else if cfg.dtbSource.git.rev != null
-    then "git"
-    else "kernel";
 in {
   options.board = {
     name = mkOption {
@@ -20,8 +13,9 @@ in {
     };
 
     dtb = mkOption {
-      type = types.str;
-      description = "Device-tree blob filename (e.g. rk3588s-radxa-cm5-io.dtb).";
+      type = types.nullOr types.str;
+      default = null;
+      description = "Device-tree blob filename (e.g. rk3588s-radxa-cm5-io.dtb). Set this or board.dts, not both.";
     };
 
     dts = mkOption {
@@ -31,17 +25,6 @@ in {
     };
 
     dtbSource = {
-      type = mkOption {
-        type = types.enum ["kernel" "git" "path"];
-        default = detectedDtbSourceType;
-        description = ''
-          Where to source the DTB from. Auto-detected if not set:
-            "kernel" — DTB built into the kernel derivation (default).
-            "git"    — fetched from a git repo (set dtbSource.git.rev).
-            "path"   — local path to a .dtb file (set dtbSource.localPath).
-        '';
-      };
-
       git = {
         owner = mkOption {
           type = types.str;

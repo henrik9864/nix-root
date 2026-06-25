@@ -3,7 +3,7 @@
   boards,
   ...
 }: {
-  imports = [boards.luckfox-pico-plus];
+  imports = [boards.luckfox-pico-plus.module];
 
   networking.hostName = "sbc-flasher";
   networking.nameservers = ["1.1.1.1" "8.8.8.8"];

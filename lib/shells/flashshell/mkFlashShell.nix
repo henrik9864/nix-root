@@ -5,7 +5,6 @@
   nativePkgs = cfg._nativePkgs;
   lib = nativePkgs.lib;
   bootloader = cfg.bootloader.package;
-  method = cfg.flash.method;
   miniloader = cfg.flash.miniloader;
 
   copyBootloaderCmds =
@@ -22,7 +21,14 @@
   copyImageCmds =
     targets
     |> builtins.mapAttrs (_: project: ''
-      cp -r ${project.image}/* "$FLASH_DIR/images/"
+      for _f in ${project.image}/*; do
+        _name=$(basename "$_f")
+        if [ -e "$FLASH_DIR/images/$_name" ]; then
+          echo "Error: image file collision: $_name" >&2
+          exit 1
+        fi
+        cp "$_f" "$FLASH_DIR/images/$_name"
+      done
     '')
     |> builtins.attrValues
     |> builtins.concatStringsSep "\n";
@@ -32,10 +38,7 @@
     # Derive disk image name from config — avoids import-from-derivation
     diskImageName = "${project.cfg.board.name}${project.cfg.output.imageSuffix}.img";
     imagePath = "images/${diskImageName}";
-    method =
-      if targetName == "spinand"
-      then "spinand"
-      else cfg.flash.method;
+    method = if targetName == "spinand" then "spinand" else "dd";
   in
     if method == "spinand"
     then
@@ -90,7 +93,7 @@ in
       trap cleanup EXIT
       echo ""
       echo "══════════════════════════════════════════════════════"
-      echo "  ${cfg.board.name} — Flash Shell (${method})"
+      echo "  ${cfg.board.name} — Flash Shell"
       echo "══════════════════════════════════════════════════════"
       echo ""
       echo "Flash dir: $FLASH_DIR"

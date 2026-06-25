@@ -3,7 +3,7 @@
   boards,
   ...
 }: {
-  imports = [boards.radxa-cm5];
+  imports = [boards.radxa-cm5.module];
 
   networking.hostName = "radxa-nas";
 

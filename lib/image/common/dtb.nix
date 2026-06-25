@@ -7,12 +7,12 @@
   dtbSource = cfg.board.dtbSource;
 
   dtbName =
-    if cfg.board.dts != ""
+    if cfg.board.dts != null
     then builtins.replaceStrings [".dts"] [".dtb"] (baseNameOf cfg.board.dts)
     else cfg.board.dtb;
 
   dtsName =
-    if cfg.board.dts != ""
+    if cfg.board.dts != null
     then baseNameOf cfg.board.dts
     else builtins.replaceStrings [".dtb"] [".dts"] dtbName;
 
@@ -71,7 +71,7 @@
     };
 
   dtbFile =
-    if cfg.board.dts != ""
+    if cfg.board.dts != null
     then "${compileDtb}/${dtbName}"
     else if dtbSource.type == "kernel"
     then "${kernel}/dtbs/rockchip/${dtbName}"
@@ -80,7 +80,7 @@
     else "${dtbSource.localPath}/${dtbName}";
 
   dtsFile =
-    if cfg.board.dts != ""
+    if cfg.board.dts != null
     then "${compileDtb}/${dtsName}"
     else null;
 in {

@@ -24,15 +24,6 @@
   defaults = targetDefaults.${cfg.target};
 in {
   options.output = {
-    targets = mkOption {
-      type = types.listOf (types.enum ["sd" "emmc" "spinand"]);
-      default = ["sd"];
-      description = ''
-        List of output targets this board supports.
-        Used by the project registry to generate image variants.
-      '';
-    };
-
     target = mkOption {
       type = types.enum ["sd" "emmc" "spinand"];
       default = "sd";

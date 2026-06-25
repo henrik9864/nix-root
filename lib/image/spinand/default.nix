@@ -39,7 +39,10 @@
     fdtput -t u $DTB_PATH "${path}" reg ${toString offsetBytes} ${toString sizeBytes}
   '';
 
-  addPartitionsCmds = ''
+  dtbPatchCmds = ''
+    ${cfg.board.dtbPatches}
+    fdtput -t s $DTB_PATH /chosen bootargs "${bootArgs}"
+    fdtput -r $DTB_PATH "${flashPath}/partitions" 2>/dev/null || true
     fdtput -c $DTB_PATH "${flashPath}/partitions"
     fdtput -t s $DTB_PATH "${flashPath}/partitions" compatible "fixed-partitions"
     fdtput -t u $DTB_PATH "${flashPath}/partitions" "#address-cells" 1
@@ -72,9 +75,7 @@ in
       cp ${dtbFile} $TMPDIR/devicetree.dtb
       chmod +w $TMPDIR/devicetree.dtb
       DTB_PATH=$TMPDIR/devicetree.dtb
-      ${cfg.board.dtbPatches}
-      fdtput -t s $DTB_PATH /chosen bootargs "${bootArgs}"
-      ${addPartitionsCmds}
+      ${dtbPatchCmds}
       cp $DTB_PATH $out/devicetree.dtb
 
       mkfs.ubifs \

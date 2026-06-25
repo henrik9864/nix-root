@@ -10,6 +10,6 @@ in
   boardDirs
   |> map (dir: {
     name = dir;
-    value = ./. + "/${dir}/board.nix";
+    value = import (./. + "/${dir}/board.nix");
   })
   |> builtins.listToAttrs

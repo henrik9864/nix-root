@@ -1,10 +1,13 @@
 {
-  lib,
-  pkgs,
-  ...
-}: let
-  inherit (lib.kernel) yes no freeform;
-in rec {
+  targets = ["sd" "spinand"];
+
+  module = {
+    lib,
+    pkgs,
+    ...
+  }: let
+    inherit (lib.kernel) yes no freeform;
+  in rec {
   board.name = "luckfox-pico-plus";
   board.crossSystem = "armv7l-unknown-linux-gnueabihf";
   board.dts = "/arch/arm/boot/dts/rv1103g-luckfox-pico-plus.dts";
@@ -49,7 +52,6 @@ in rec {
     }
   ];
 
-  flash.method = "spinand";
   flash.miniloader = pkgs.rkbin-miniloader.override {iniFile = "RV1106MINIALL";};
   flash.nand.totalSizeMiB = 128;
   flash.nand.dtFlashPath = "/spi@ffac0000/flash@0";
@@ -244,6 +246,5 @@ in rec {
   '';
 
   serial.console = "ttyS2,115200";
-
-  output.targets = ["sd" "spinand"];
+  };
 }

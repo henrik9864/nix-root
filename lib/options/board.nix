@@ -7,9 +7,9 @@
   cfg = config.board;
 
   detectedDtbSourceType =
-    if cfg.dtbSource.localPath != ""
+    if cfg.dtbSource.localPath != null
     then "path"
-    else if cfg.dtbSource.git.rev != ""
+    else if cfg.dtbSource.git.rev != null
     then "git"
     else "kernel";
 in {
@@ -25,8 +25,8 @@ in {
     };
 
     dts = mkOption {
-      type = types.str;
-      default = "";
+      type = types.nullOr types.str;
+      default = null;
       description = "Device-tree source filename (e.g. rv1103g-luckfox-pico-plus.dts). If set, compiled to a .dtb at build time.";
     };
 
@@ -54,8 +54,8 @@ in {
           description = "GitHub repository name.";
         };
         rev = mkOption {
-          type = types.str;
-          default = "";
+          type = types.nullOr types.str;
+          default = null;
           description = "Git revision (tag, branch, or commit hash).";
         };
         hash = mkOption {
@@ -76,8 +76,8 @@ in {
       };
 
       localPath = mkOption {
-        type = types.str;
-        default = "";
+        type = types.nullOr types.str;
+        default = null;
         description = "Absolute path to the .dtb file. Use toString ./path/to/file.dtb in the board .nix.";
       };
     };

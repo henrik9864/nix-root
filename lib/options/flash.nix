@@ -29,15 +29,6 @@
   };
 in {
   options.flash = {
-    method = mkOption {
-      type = types.enum ["spinand" "dd"];
-      default = "dd";
-      description = ''
-        Flash method for installing firmware onto the board.
-        "dd"           — Direct sector writes to a block device.
-      '';
-    };
-
     miniloader = mkOption {
       type = types.nullOr types.package;
       default = null;

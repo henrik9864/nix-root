@@ -1,10 +1,13 @@
 {
-  lib,
-  pkgs,
-  ...
-}: let
-  inherit (lib.kernel) yes;
-in {
+  targets = ["sd" "emmc"];
+
+  module = {
+    lib,
+    pkgs,
+    ...
+  }: let
+    inherit (lib.kernel) yes;
+  in {
   board.name = "radxa-cm5";
   board.dtb = "rk3588s-radxa-cm5-io.dtb";
   board.crossSystem = "aarch64-unknown-linux-gnu";
@@ -20,9 +23,6 @@ in {
       offset = 16384;
     }
   ];
-
-  # Add after the existing bootloader/kernel/image config:
-  flash.method = "dd";
 
   kernel.version = "7.0-rc4";
   kernel.modDirVersion = "7.0.0-rc4";
@@ -47,6 +47,5 @@ in {
   image.rootfsPadding = 16;
 
   serial.console = "ttyS2,1500000";
-
-  output.targets = ["sd" "emmc"];
+  };
 }

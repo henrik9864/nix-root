@@ -20,7 +20,9 @@
       then ./lib/image/disk
       else ./lib/image + "/${target}";
 
-    mkProjectTargets = projectModule: let
+    mkProjectTargets = {module, targets}: let
+      projectModule = module;
+      targetsList = targets;
       projectName = baseNameOf (builtins.dirOf projectModule);
 
       evalCfg = outputTarget:
@@ -30,9 +32,6 @@
           modules = [projectModule {output.target = outputTarget;}];
         })
         .config;
-
-      # output.targets is board-defined; doesn't vary with outputTarget
-      targetsList = (evalCfg "sd").output.targets;
 
       mkTarget = outputTarget: let
         cfg = evalCfg outputTarget;
@@ -61,7 +60,7 @@
         targetsList);
     };
 
-    projects = builtins.listToAttrs (map mkProjectTargets (import ./projects/projects.nix));
+    projects = builtins.listToAttrs (map mkProjectTargets ((import ./projects/projects.nix) {inherit boards;}));
   in {
     images =
       projects

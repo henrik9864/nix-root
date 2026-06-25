@@ -31,12 +31,12 @@
 
   mkPartitionCmds = p: let
     path = "${flashPath}/partitions/partition@${lib.toHexString (mibToBytes p.offsetMiB)}";
-    offset = toHex (mibToBytes p.offsetMiB);
-    size = toHex (partSize p);
+    offsetBytes = mibToBytes p.offsetMiB;
+    sizeBytes = partSize p;
   in ''
     fdtput -c $DTB_PATH "${path}"
     fdtput -t s $DTB_PATH "${path}" label "${p.name}"
-    fdtput -t u $DTB_PATH "${path}" reg ${offset} ${size}
+    fdtput -t u $DTB_PATH "${path}" reg ${toString offsetBytes} ${toString sizeBytes}
   '';
 
   addPartitionsCmds = ''

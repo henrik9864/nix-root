@@ -158,6 +158,12 @@ in {
         default = "";
         description = "Extra shell commands run inside the rootfs derivation.";
       };
+
+      extraInitCommands = mkOption {
+        type = types.lines;
+        default = "";
+        description = "Extra shell commands appended to the init script after networking is up.";
+      };
     };
   };
 

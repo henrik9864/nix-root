@@ -121,6 +121,7 @@
     echo ":: Boot OK ::"
     hostname ${cfg.networking.hostName}
     ${networkScript}
+    ${cfg.rootfs.extraInitCommands}
 
     while true; do
       setsid cttyhack /bin/sh </dev/console >/dev/console 2>&1 || /bin/sh </dev/console >/dev/console 2>&1

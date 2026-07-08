@@ -1,4 +1,4 @@
-{lib, ...}: let
+{lib, config, nativePkgs, ...}: let
   inherit (lib) mkOption mkEnableOption types;
 
   serialDeviceOpts = types.submodule {
@@ -75,5 +75,20 @@ in {
       default = {};
       description = "Fake USB devices to create in the devshell.";
     };
+
+    nativePackages = mkOption {
+      type = types.listOf types.package;
+      description = "Native (x86_64) static packages for devshell. Defaults to the native equivalents of environment.systemPackages via pkgsStatic.";
+    };
   };
+
+  config.devShell.nativePackages = lib.mkDefault (
+    map (pkg:
+      let attr = pkg.pname or null;
+      in
+        if attr != null && nativePkgs.pkgsStatic ? ${attr}
+        then nativePkgs.pkgsStatic.${attr}
+        else throw "devShell.nativePackages: cannot auto-derive native equivalent for '${pkg.name}'. Set devShell.nativePackages explicitly."
+    ) config.environment.systemPackages
+  );
 }

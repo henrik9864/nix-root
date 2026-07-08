@@ -1,4 +1,4 @@
-{ nativePkgs, cfg }:
+{ nativePkgs }:
 
 let
   lib = nativePkgs.lib;
@@ -10,28 +10,29 @@ in
 name: opts:
 
 let
-  envVar = "SERIAL_${sanitizeName name}";
-  baud = toString opts.baud;
-  echoArg = lib.optionalString opts.echo ",echo=1";
+  envVar     = "SERIAL_${sanitizeName name}";
+  baud       = toString opts.baud;
+  echoArg    = lib.optionalString opts.echo ",echo=1";
+  masterPath = "/run/devshell/serial-${name}-master";
+  slavePath  = "/run/devshell/serial-${name}-slave";
 
   createSymlink = lib.optionalString (opts.symlink != null) ''
-    mkdir -p "$(dirname "$ROOTFS${opts.symlink}")"
-    ln -sf "$DEVSHELL_TMPDIR/serial-${name}-slave" "$ROOTFS${opts.symlink}"
+    mkdir -p "$(dirname "${opts.symlink}")"
+    ln -sf "${slavePath}" "${opts.symlink}"
   '';
 
   startLogger = lib.optionalString (opts.logFile != null)
-    "socat -u OPEN:$DEVSHELL_TMPDIR/serial-${name}-master,rdonly OPEN:$ROOTFS${opts.logFile},creat,append &";
+    "socat -u OPEN:${masterPath},rdonly OPEN:${opts.logFile},creat,append &";
 in
 
 ''
-  socat PTY,raw,b${baud},link=$DEVSHELL_TMPDIR/serial-${name}-master \
-        PTY,raw,b${baud}${echoArg},link=$DEVSHELL_TMPDIR/serial-${name}-slave &
-  MOCK_PIDS="$MOCK_PIDS $!"
+  socat PTY,raw,b${baud},link=${masterPath} \
+        PTY,raw,b${baud}${echoArg},link=${slavePath} &
 
-  while [ ! -e "$DEVSHELL_TMPDIR/serial-${name}-slave" ]; do sleep 0.05; done
+  while [ ! -e "${slavePath}" ]; do sleep 0.05; done
 
-  export ${envVar}="$DEVSHELL_TMPDIR/serial-${name}-slave"
-  export ${envVar}_MASTER="$DEVSHELL_TMPDIR/serial-${name}-master"
+  export ${envVar}="${slavePath}"
+  export ${envVar}_MASTER="${masterPath}"
 
   ${createSymlink}
   ${startLogger}

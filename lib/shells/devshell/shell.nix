@@ -12,7 +12,7 @@ rec {
     export INPUTRC=${inputrc}
     bind -f ${inputrc} 2>/dev/null
 
-    HISTFILE="$ROOTFS/.bash_history"
+    HISTFILE=/root/.bash_history
     HISTSIZE=1000
     HISTFILESIZE=2000
     shopt -s histappend

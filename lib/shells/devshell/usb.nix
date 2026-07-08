@@ -1,4 +1,4 @@
-{ nativePkgs, cfg }:
+{ nativePkgs }:
 
 let
   lib = nativePkgs.lib;
@@ -17,9 +17,13 @@ let
     else if opts.type == "serial" then "/dev/ttyACM0"
     else "/dev/usbdisk0";
 
+  masterPath = "/run/devshell/usb-${name}-master";
+  slavePath  = "/run/devshell/usb-${name}-slave";
+  imgPath    = "/run/devshell/usb-${name}.img";
+
   createSymlink = ''
-    mkdir -p "$(dirname "$ROOTFS${symlink}")"
-    ln -sf "$${envVar}" "$ROOTFS${symlink}"
+    mkdir -p "$(dirname "${symlink}")"
+    ln -sf "$${envVar}" "${symlink}"
   '';
 
   mkfsCommand =
@@ -29,22 +33,21 @@ let
 in
 
 if opts.type == "serial" then ''
-  socat PTY,raw,link=$DEVSHELL_TMPDIR/usb-${name}-master \
-        PTY,raw,link=$DEVSHELL_TMPDIR/usb-${name}-slave &
-  MOCK_PIDS="$MOCK_PIDS $!"
+  socat PTY,raw,link=${masterPath} \
+        PTY,raw,link=${slavePath} &
 
-  while [ ! -e "$DEVSHELL_TMPDIR/usb-${name}-slave" ]; do sleep 0.05; done
+  while [ ! -e "${slavePath}" ]; do sleep 0.05; done
 
-  export ${envVar}="$DEVSHELL_TMPDIR/usb-${name}-slave"
-  export ${envVar}_MASTER="$DEVSHELL_TMPDIR/usb-${name}-master"
+  export ${envVar}="${slavePath}"
+  export ${envVar}_MASTER="${masterPath}"
 
   ${createSymlink}
 
 '' else if opts.type == "storage" then ''
-  dd if=/dev/zero of=$DEVSHELL_TMPDIR/usb-${name}.img bs=1M count=${toString opts.storageSize} 2>/dev/null
-  ${mkfsCommand} $DEVSHELL_TMPDIR/usb-${name}.img >/dev/null 2>&1
+  dd if=/dev/zero of=${imgPath} bs=1M count=${toString opts.storageSize} 2>/dev/null
+  ${mkfsCommand} ${imgPath} >/dev/null 2>&1
 
-  export ${envVar}="$DEVSHELL_TMPDIR/usb-${name}.img"
+  export ${envVar}="${imgPath}"
 
   ${createSymlink}
 
